@@ -59,6 +59,9 @@ st.markdown("""
         background: #f0f0f0 !important;
         color: #333 !important;
         box-shadow: none !important;
+        border-radius: 12px !important;
+        padding: 6px 12px !important;
+        font-size: 12px !important;
     }
     .stButton > button[kind="secondary"]:hover {
         background: #e0e0e0 !important;
@@ -66,6 +69,20 @@ st.markdown("""
 
     div[data-testid="stSidebarUserContent"] {
         padding-top: 2rem;
+    }
+
+    /* Image container */
+    .product-image {
+        border-radius: 16px 16px 0 0;
+        overflow: hidden;
+        background: #f8f8f8;
+    }
+
+    /* Promo badge */
+    .promo-text {
+        color: #e94560;
+        font-size: 11px;
+        font-weight: 700;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -230,13 +247,12 @@ def render_hero():
 
 # ==================== PRODUCT CARD ====================
 def render_product_card(product):
-    """Render product using native Streamlit components"""
+    """Render product using native Streamlit components with compact slider"""
 
     # Card container
     with st.container():
-        # Image section with slider
+        # Image section
         if product['images']:
-            # Initialize image index for this product
             prod_key = f"img_idx_{product['id']}"
             if prod_key not in st.session_state.current_image_idx:
                 st.session_state.current_image_idx[prod_key] = 0
@@ -244,29 +260,19 @@ def render_product_card(product):
             current_idx = st.session_state.current_image_idx[prod_key]
             current_img = product['images'][current_idx]
 
-            # Display image
+            # Display image with fixed aspect ratio
             st.image(current_img, use_container_width=True)
 
-            # Image navigation (only if multiple images)
+            # Compact image navigation (only if multiple images)
             if product['image_count'] > 1:
-                nav_cols = st.columns(product['image_count'] + 2)
-                with nav_cols[0]:
-                    if st.button("◀", key=f"prev_{product['id']}"):
-                        st.session_state.current_image_idx[prod_key] = (current_idx - 1) % product['image_count']
-                        st.rerun()
-
-                # Dot indicators
+                # Use a single row of small buttons
+                nav_cols = st.columns([1] * product['image_count'])
                 for i in range(product['image_count']):
-                    with nav_cols[i + 1]:
-                        dot_color = "🔴" if i == current_idx else "⚪"
-                        if st.button(dot_color, key=f"dot_{product['id']}_{i}"):
+                    with nav_cols[i]:
+                        btn_label = "●" if i == current_idx else "○"
+                        if st.button(btn_label, key=f"nav_{product['id']}_{i}", use_container_width=True):
                             st.session_state.current_image_idx[prod_key] = i
                             st.rerun()
-
-                with nav_cols[-1]:
-                    if st.button("▶", key=f"next_{product['id']}"):
-                        st.session_state.current_image_idx[prod_key] = (current_idx + 1) % product['image_count']
-                        st.rerun()
         else:
             st.image("https://via.placeholder.com/400x300?text=Sin+Imagen", use_container_width=True)
 
@@ -282,12 +288,8 @@ def render_product_card(product):
         # Stars
         st.markdown("<p style='font-size: 14px; margin: 4px 0;'>⭐⭐⭐⭐⭐ <span style='color: #999; font-size: 12px;'>(4.5)</span></p>", unsafe_allow_html=True)
 
-        # Price and add button
-        price_col1, price_col2 = st.columns([1, 1])
-        with price_col1:
-            st.markdown(f"<p style='font-size: 24px; font-weight: 800; color: #1a1a2e; margin: 0;'>${product['price']:.2f}</p>", unsafe_allow_html=True)
-        with price_col2:
-            st.write("")
+        # Price
+        st.markdown(f"<p style='font-size: 24px; font-weight: 800; color: #1a1a2e; margin: 8px 0;'>${product['price']:.2f}</p>", unsafe_allow_html=True)
 
         # Sizes info
         st.markdown(f"<p style='font-size: 12px; color: #666; margin-top: 8px; padding-top: 8px; border-top: 1px solid #f0f0f0;'>📏 Tallas: <strong>{', '.join(product['sizes'])}</strong></p>", unsafe_allow_html=True)
@@ -468,7 +470,6 @@ def main():
             for j, col in enumerate(cols):
                 if i + j < len(filtered):
                     with col:
-                        # Card styling with container
                         with st.container():
                             st.markdown("""
                             <div style="background: white; border-radius: 20px; overflow: hidden; 
