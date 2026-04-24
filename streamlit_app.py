@@ -3,207 +3,211 @@ import pandas as pd
 import re
 from urllib.parse import quote
 
-# ==================== PAGE CONFIG ====================
+# ==================== CONFIGURACIÓN DE PÁGINA ====================
 st.set_page_config(
-    page_title="Yalis Calzado - Tienda Online",
+    page_title="Yalis Calzado | Premium Store",
     page_icon="👠",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# ==================== SECRETS & DATA ====================
+# ==================== CARGA DE DATOS Y SECRETOS ====================
 CSV_URL = st.secrets.get("google_sheets", {}).get("csv_url", "https://docs.google.com/spreadsheets/d/e/2PACX-1vRvD-qp4xFa_9tfSAPcQpfxRz_bOx9xjczcLAWDwM2avDd1HBpB0UEnC93bqdsOJ5a6ULVV-T7ThoI_/pub?gid=0&single=true&output=csv")
 WHATSAPP_NUMBER = st.secrets.get("google_sheets", {}).get("whatsapp_number", "59398868363")
 
-# ==================== STYLING (CSS) ====================
+# ==================== ESTILOS CSS PROFESIONALES ====================
 st.markdown("""
 <style>
-    /* Importar fuente */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
-    
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+
     html, body, [class*="st-"] {
-        font-family: 'Inter', sans-serif;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        color: #1a1a1a;
     }
 
-    /* Ocultar elementos de Streamlit */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    /* Ocultar elementos innecesarios */
+    #MainMenu, footer, header {visibility: hidden;}
+    
+    /* Fondo de la app */
+    .stApp {
+        background-color: #fcfcfc;
+    }
 
-    /* Botón principal estilo 'Lujo' */
-    div.stButton > button:first-child {
-        background: #1a1a2e !important;
-        color: white !important;
-        border-radius: 8px !important;
+    /* Botón principal (Add to Cart) */
+    div.stButton > button {
+        background: #000000 !important;
+        color: #ffffff !important;
+        border-radius: 6px !important;
         border: none !important;
-        padding: 0.5rem 1rem !important;
-        transition: all 0.3s ease;
-        width: 100%;
+        font-weight: 600 !important;
+        height: 45px !important;
+        width: 100% !important;
+        transition: all 0.3s ease !important;
     }
     div.stButton > button:hover {
         background: #e94560 !important;
         transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(233, 69, 96, 0.3) !important;
     }
 
-    /* Estilo de los selectores de imagen (bolitas) */
-    div[data-testid="column"] button {
-        background-color: transparent !important;
-        border: 1px solid #ddd !important;
-        color: #333 !important;
-        padding: 2px !important;
-        font-size: 10px !important;
-        height: auto !important;
+    /* Input styling */
+    .stTextInput input, .stSelectbox div {
+        border-radius: 8px !important;
     }
 
-    /* Cards de productos */
-    [data-testid="stVerticalBlockBorderWrapper"] {
-        background-color: white;
-        border-radius: 15px !important;
-        transition: box-shadow 0.3s ease;
-    }
-    [data-testid="stVerticalBlockBorderWrapper"]:hover {
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
-    }
-
-    .price-text {
-        font-size: 22px;
+    /* Estilo para precios */
+    .price-tag {
+        font-size: 1.4rem;
         font-weight: 800;
-        color: #1a1a2e;
-        margin: 0;
+        color: #1a1a1a;
+        margin: 5px 0;
+    }
+
+    /* Estilo del Sidebar (Carrito) */
+    [data-testid="stSidebar"] {
+        background-color: #ffffff !important;
+        border-left: 1px solid #eee;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# ==================== DATA LOADING ====================
+# ==================== LÓGICA DE NEGOCIO ====================
+
+def get_google_drive_direct_url(url):
+    """Convierte links de Drive en links de imagen directa."""
+    if 'drive.google.com' in url:
+        match = re.search(r'(?:id=|[d]/)([\w-]+)', url)
+        if match:
+            return f"https://drive.google.com/uc?export=view&id={match.group(1)}"
+    return url
+
 @st.cache_data(ttl=300)
-def load_products():
+def load_data():
     try:
         df = pd.read_csv(CSV_URL)
-        products = []
+        prods = []
         for idx, row in df.iterrows():
-            # Procesar tallas
-            sizes = [s.strip() for s in str(row.get('Tallas', '')).split(',') if s.strip()]
-            
-            # Procesar precio
-            try:
-                price = float(str(row.get('Precio', '0')).replace('$', '').replace(',', '.'))
-            except: price = 0.0
-
-            # Procesar imágenes de Google Drive
-            images = []
+            # Procesar imágenes
+            img_list = []
             for col in df.columns:
                 if 'imagen' in col.lower():
-                    url = str(row.get(col, ''))
-                    if 'drive.google.com' in url:
-                        match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
-                        if match: url = f"https://drive.google.com/uc?export=view&id={match[1]}"
-                    if url and url != 'nan': images.append(url)
-
-            products.append({
+                    val = str(row.get(col, ''))
+                    if val != 'nan' and len(val) > 10:
+                        img_list.append(get_google_drive_direct_url(val))
+            
+            # Procesar tallas
+            tallas = [t.strip() for t in str(row.get('Tallas', '')).split(',') if t.strip()]
+            
+            prods.append({
                 'id': str(row.get('cod.', idx)),
-                'code': str(row.get('cod.', '')),
-                'collection': str(row.get('Coleccion', 'General')),
                 'name': str(row.get('Nombre', 'Producto')),
-                'price': price,
-                'sizes': sizes,
-                'images': images
+                'price': float(str(row.get('Precio', 0)).replace('$', '').replace(',', '.')),
+                'category': str(row.get('Coleccion', 'General')),
+                'code': str(row.get('cod.', '')),
+                'images': img_list,
+                'sizes': tallas
             })
-        return products
+        return prods
     except Exception as e:
-        st.error(f"Error: {e}")
+        st.error(f"Error cargando datos: {e}")
         return []
 
-# ==================== HELPERS ====================
-if 'cart' not in st.session_state: st.session_state.cart = []
-if 'img_idx' not in st.session_state: st.session_state.img_idx = {}
+# Inicializar carrito
+if 'cart' not in st.session_state:
+    st.session_state.cart = []
 
-def add_to_cart(product, size):
-    st.session_state.cart.append({**product, 'selected_size': size})
-    st.toast(f"✅ {product['name']} añadido")
+# ==================== INTERFAZ DE USUARIO ====================
 
-# ==================== MAIN UI ====================
-products = load_products()
-
-# Hero Header
-st.markdown(f"""
-    <div style="text-align: center; padding: 2rem 0;">
-        <h1 style='font-weight: 800; color: #1a1a2e;'>Calzado con <span style='color: #e94560;'>Estilo</span> y Elegancia</h1>
-        <p style='color: #666;'>Nueva Colección 2026 - Envíos a todo el país</p>
+# HEADER HERO
+st.markdown("""
+    <div style="text-align: center; padding: 3rem 0 2rem 0;">
+        <h1 style="font-size: 3rem; font-weight: 800; letter-spacing: -1px;">YALIS <span style="color:#e94560;">CALZADO</span></h1>
+        <p style="color: #666; font-size: 1.1rem;">Elegancia y confort en cada paso | Colección 2026</p>
     </div>
 """, unsafe_allow_html=True)
 
-# Filtros
-col_f1, col_f2 = st.columns([1, 2])
+products = load_data()
+
+# FILTROS
+col_f1, col_f2, col_f3 = st.columns([1, 1, 1])
 with col_f1:
-    cats = ["Todos"] + sorted(list(set(p['collection'] for p in products)))
-    category = st.selectbox("Colección", cats)
+    categories = ["Todas las colecciones"] + sorted(list(set(p['category'] for p in products)))
+    cat_filter = st.selectbox("Filtrar por Colección", categories)
 with col_f2:
-    search = st.text_input("Buscar por nombre o código", placeholder="Ej: Bota de Cuero")
+    search_query = st.text_input("Buscar calzado...", placeholder="Nombre o código")
 
-# Filtrado lógico
-filtered = [p for p in products if (category == "Todos" or p['collection'] == category) and 
-            (search.lower() in p['name'].lower() or search.lower() in p['code'].lower())]
+# Lógica de filtrado
+filtered_prods = [p for p in products if 
+    (cat_filter == "Todas las colecciones" or p['category'] == cat_filter) and 
+    (search_query.lower() in p['name'].lower() or search_query.lower() in p['code'].lower())]
 
-# Grid de Productos
-cols_per_row = 4
-rows = [filtered[i:i + cols_per_row] for i in range(0, len(filtered), cols_per_row)]
+st.divider()
 
-for row in rows:
-    cols = st.columns(cols_per_row)
-    for i, product in enumerate(row):
-        with cols[i]:
-            # Contenedor con borde (Card)
-            with st.container(border=True):
-                # Gestión de imágenes
-                prod_id = product['id']
-                if prod_id not in st.session_state.img_idx:
-                    st.session_state.img_idx[prod_id] = 0
-                
-                curr_img = st.session_state.img_idx[prod_id]
-                if product['images']:
-                    st.image(product['images'][curr_img], use_container_width=True)
+# GRID DE PRODUCTOS
+if not filtered_prods:
+    st.info("No se encontraron productos con estos filtros.")
+else:
+    # Mostramos en filas de 4 columnas
+    rows = [filtered_prods[i:i + 4] for i in range(0, len(filtered_prods), 4)]
+    
+    for row in rows:
+        cols = st.columns(4)
+        for i, product in enumerate(row):
+            with cols[i]:
+                # Usamos el contenedor nativo con borde para la "Card"
+                with st.container(border=True):
+                    # Imagen principal
+                    if product['images']:
+                        st.image(product['images'][0], use_container_width=True)
+                    else:
+                        st.image("https://via.placeholder.com/400x400?text=Sin+Imagen", use_container_width=True)
                     
-                    # Mini-galería si hay más de una foto
-                    if len(product['images']) > 1:
-                        sub_cols = st.columns(len(product['images']))
-                        for btn_idx in range(len(product['images'])):
-                            label = "●" if btn_idx == curr_img else "○"
-                            if sub_cols[btn_idx].button(label, key=f"btn_{prod_id}_{btn_idx}"):
-                                st.session_state.img_idx[prod_id] = btn_idx
-                                st.rerun()
-                
-                # Info de texto
-                st.caption(f"{product['collection']} | {product['code']}")
-                st.markdown(f"**{product['name']}**")
-                st.markdown(f"<p class='price-text'>${product['price']:.2f}</p>", unsafe_allow_html=True)
-                
-                # Selector de talla y botón
-                selected_size = st.selectbox("Talla", product['sizes'], key=f"size_{prod_id}")
-                if st.button("Añadir al carrito", key=f"add_{prod_id}"):
-                    add_to_cart(product, selected_size)
+                    # Detalles del producto
+                    st.markdown(f"<span style='color:#e94560; font-size:0.8rem; font-weight:600;'>{product['category']}</span>", unsafe_allow_html=True)
+                    st.markdown(f"**{product['name']}**")
+                    st.markdown(f"<p class='price-tag'>${product['price']:.2f}</p>", unsafe_allow_html=True)
+                    
+                    # Selección de talla
+                    selected_size = st.selectbox("Talla disponible:", product['sizes'], key=f"size_{product['id']}")
+                    
+                    if st.button("Añadir al Carrito", key=f"add_{product['id']}"):
+                        st.session_state.cart.append({
+                            'name': product['name'],
+                            'price': product['price'],
+                            'size': selected_size,
+                            'code': product['code']
+                        })
+                        st.toast(f"✅ Añadido: {product['name']}")
 
-# ==================== SIDEBAR CARRITO ====================
+# ==================== SIDEBAR (CARRITO) ====================
 with st.sidebar:
-    st.title("🛒 Tu Pedido")
+    st.header("🛒 Tu Pedido")
     if not st.session_state.cart:
-        st.info("El carrito está vacío")
+        st.write("El carrito está vacío.")
     else:
         total = 0
-        whatsapp_msg = "Hola Yalis Calzado! Deseo ordenar:\n\n"
+        whatsapp_text = "¡Hola Yalis Calzado! 👋 Deseo realizar este pedido:\n\n"
         
         for i, item in enumerate(st.session_state.cart):
             with st.container(border=True):
                 st.write(f"**{item['name']}**")
-                st.write(f"Talla: {item['selected_size']} | ${item['price']:.2f}")
-                if st.button("Eliminar", key=f"del_{i}"):
+                st.write(f"Talla: {item['size']} | ${item['price']:.2f}")
+                if st.button("Quitar", key=f"remove_{i}"):
                     st.session_state.cart.pop(i)
                     st.rerun()
                 total += item['price']
-                whatsapp_msg += f"- {item['name']} (Talla: {item['selected_size']}) - ${item['price']}\n"
+                whatsapp_text += f"• {item['name']} (Talla: {item['size']}) - ${item['price']:.2f}\n"
         
         st.divider()
         st.subheader(f"Total: ${total:.2f}")
         
-        whatsapp_msg += f"\n*Total: ${total:.2f}*"
-        url = f"https://wa.me/{WHATSAPP_NUMBER}?text={quote(whatsapp_msg)}"
-        st.link_button("Confirmar por WhatsApp 📱", url, use_container_width=True)
+        whatsapp_text += f"\n💰 *Total a pagar: ${total:.2f}*"
+        wa_url = f"https://wa.me/{WHATSAPP_NUMBER}?text={quote(whatsapp_text)}"
+        
+        st.link_button("🚀 Enviar Pedido por WhatsApp", wa_url, use_container_width=True)
+        if st.button("Vaciar Carrito"):
+            st.session_state.cart = []
+            st.rerun()
+
+# FOOTER
+st.markdown("<br><br><center><p style='color:#888;'>© 2026 Yalis Calzado - Hecho con ❤️ en Ecuador</p></center>", unsafe_allow_html=True)
