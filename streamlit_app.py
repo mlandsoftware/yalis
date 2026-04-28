@@ -13,176 +13,89 @@ WHATSAPP_NUMBER = "593978868363"
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Montserrat:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap');
 
-/* Fondo general con un sutil tono marfil (más cálido que el blanco puro) */
+/* FONDO DEGRADADO SEGÚN LA IMAGEN */
 .stApp {
-    background-color: #FBF9F4;
-}
-
-html, body, [data-testid="stAppViewContainer"] {
-    color: #1A1A1A !important;
+    background: linear-gradient(135deg, #d4f3ef 0%, #e8f0ff 50%, #fdf2f8 100%);
     font-family: 'Montserrat', sans-serif;
 }
 
-/* ========== TARJETA DE PRODUCTO ========== */
+/* TARJETA CON ESTILO DE LA IMAGEN (BORDE CURVO ASIMÉTRICO) */
 .product-card {
     background: #FFFFFF;
-    border-radius: 28px;
-    padding: 0 0 24px 0;
-    border: 1px solid rgba(212, 175, 55, 0.15);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06),
-                0 0 0 1px rgba(212, 175, 55, 0.05) inset;
-    margin-bottom: 36px;
+    /* El truco del diseño: bordes redondeados solo en esquinas opuestas */
+    border-radius: 0px 80px 0px 80px; 
+    padding: 25px;
+    margin-bottom: 40px;
     text-align: center;
-    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    transition: all 0.4s ease;
+    border: none;
     display: flex;
     flex-direction: column;
-    height: 100%;
-    transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-                box-shadow 0.35s ease;
+    align-items: center;
 }
 
 .product-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 30px 50px rgba(0, 0, 0, 0.12),
-                0 0 0 1px rgba(212, 175, 55, 0.3) inset;
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
 }
 
-/* Imagen dentro de la tarjeta: tamaño uniforme y recorte limpio */
+/* IMAGEN DENTRO DE LA TARJETA */
 .product-card img {
     width: 100%;
-    height: 280px;
+    border-radius: 0px 60px 0px 60px; /* Sigue el patrón de la tarjeta */
     object-fit: cover;
-    display: block;
-    transition: transform 0.6s ease;
+    height: 250px;
+    margin-bottom: 20px;
 }
 
-.product-card:hover img {
-    transform: scale(1.04);
-}
-
-/* ========== INFORMACIÓN DEL PRODUCTO ========== */
-.product-info {
-    padding: 20px 18px 10px 18px;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
+/* TÍTULOS Y TEXTO */
 .product-title {
-    font-family: 'Montserrat', sans-serif;
     font-weight: 600;
-    font-size: 1.15rem;
-    letter-spacing: 0.3px;
-    color: #2B2B2B;
-    min-height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 6px;
-    padding: 0 4px;
-    line-height: 1.3;
+    font-size: 1.2rem;
+    color: #333;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
 }
 
 .product-price {
-    font-family: 'Cinzel', serif;
-    font-size: 1.5rem;
-    color: #C5A028;
-    font-weight: 500;
-    letter-spacing: 1px;
-    margin: 4px 0 12px 0;
+    font-weight: 300;
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 20px;
 }
 
-/* ========== BOTÓN (Streamlit) ========== */
+/* BOTÓN REDONDEADO "COMPRA TODO" ESTILO IMAGEN */
 .stButton > button {
-    background: linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 100%) !important;
-    color: #D4AF37 !important;
-    border-radius: 50px !important;
-    border: 1px solid #D4AF37 !important;
-    padding: 12px 28px !important;
-    font-size: 0.8rem !important;
+    background-color: #bee3e9 !important; /* Color celeste pastel del botón de la imagen */
+    color: #1a1a1a !important;
+    border: none !important;
+    border-radius: 50px !important; /* Completamente redondeado */
+    padding: 10px 40px !important;
     font-weight: 600 !important;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    width: 82% !important;
+    font-size: 0.9rem !important;
+    text-transform: none !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05) !important;
+    transition: all 0.3s ease !important;
+    width: auto !important;
     margin: 0 auto !important;
     display: block;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
-    transition: all 0.3s ease;
 }
 
 .stButton > button:hover {
-    background: linear-gradient(135deg, #D4AF37 0%, #C5A028 100%) !important;
-    color: #1A1A1A !important;
-    border-color: #D4AF37 !important;
-    box-shadow: 0 8px 20px rgba(212, 175, 55, 0.5);
-    transform: scale(1.02);
+    background-color: #a8dadc !important;
+    transform: scale(1.05);
 }
 
-/* ========== PESTAÑAS DEL DIÁLOGO ========== */
-.stTabs [data-baseweb="tab-list"] {
-    justify-content: center;
-    gap: 32px;
-    padding-bottom: 8px;
-}
+/* OCULTAR ELEMENTOS INNECESARIOS */
+header, footer {visibility: hidden;}
 
-.stTabs [data-baseweb="tab"] {
-    color: #888888 !important;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    transition: color 0.2s ease;
-}
-
-.stTabs [aria-selected="true"] {
-    color: #D4AF37 !important;
-    border-bottom-color: #D4AF37 !important;
-}
-
-/* ========== OCULTAR ELEMENTOS DE STREAMLIT ========== */
-header {visibility: hidden;}
-footer {visibility: hidden;}
-
-/* ========== RESPONSIVE ========== */
-@media (max-width: 992px) {
-    /* En tablet: 2 columnas */
-    [data-testid="column"] {
-        width: 50% !important;
-        flex: 1 1 50% !important;
-    }
-}
-
-@media (max-width: 768px) {
-    /* En móvil: 1 columna, fuentes más pequeñas */
-    [data-testid="column"] {
-        width: 100% !important;
-        flex: 1 1 100% !important;
-    }
-    .product-card img {
-        height: 230px;
-    }
-    .product-title {
-        font-size: 1rem;
-        min-height: 40px;
-    }
-    .product-price {
-        font-size: 1.3rem;
-    }
-    .stButton > button {
-        padding: 10px 24px !important;
-        font-size: 0.75rem !important;
-    }
-}
-
-/* Pequeño ajuste para que el texto del botón no se corte en resoluciones muy pequeñas */
-@media (max-width: 480px) {
-    .stButton > button {
-        letter-spacing: 1px;
-        width: 90% !important;
-    }
+/* AJUSTES DE COLUMNAS */
+[data-testid="column"] {
+    padding: 1rem !important;
 }
 </style>
 """, unsafe_allow_html=True)
