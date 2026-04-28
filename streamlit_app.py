@@ -10,7 +10,7 @@ st.set_page_config(page_title="YALIS | Luxury Footwear", layout="wide")
 
 WHATSAPP_NUMBER = "593978868363"
 
-# --- CSS INTEGRADO: ESTILOS GLOBALES, TARJETAS Y MODAL ---
+# --- CSS INTEGRADO ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
@@ -25,12 +25,9 @@ st.markdown("""
 div[data-testid="stDialog"] div[role="dialog"] {
     background-color: #FFFFFF !important;
     border-radius: 20px !important;
-    color: #000000 !important; /* Texto base negro */
 }
 
-/* Forzar negro en todos los textos del modal */
-div[data-testid="stDialog"] h1, 
-div[data-testid="stDialog"] h2, 
+/* Forzar negro en textos informativos del modal (excepto títulos específicos) */
 div[data-testid="stDialog"] h3, 
 div[data-testid="stDialog"] p, 
 div[data-testid="stDialog"] span, 
@@ -103,8 +100,8 @@ def get_image_from_drive(url):
 # --- VENTANA EMERGENTE (MODAL) ---
 @st.dialog("Detalle del producto")
 def comprar_producto(row):
-    # Todo el texto en negro forzado por estilo inline y CSS global
-    st.markdown(f"<h2 style='color:#000000; font-family:Montserrat; font-weight:800; text-align:center;'>{row['Nombre']}</h2>", unsafe_allow_html=True)
+    # NOMBRE EN COLOR FUCSIA (#E91E63)
+    st.markdown(f"<h2 style='color:#E91E63; font-family:Montserrat; font-weight:800; text-align:center;'>{row['Nombre']}</h2>", unsafe_allow_html=True)
     
     col_img, col_det = st.columns([1.2, 1])
     
@@ -114,14 +111,13 @@ def comprar_producto(row):
             st.image(data, use_container_width=True)
             
     with col_det:
+        # PRECIO Y OTROS TEXTOS EN NEGRO
         st.markdown(f"<h3 style='color:#000000; font-family:Montserrat;'>${row['Precio']}</h3>", unsafe_allow_html=True)
         st.markdown(f"<p style='color:#000000;'><b>Colección:</b> {row['Coleccion']}</p>", unsafe_allow_html=True)
         
         tallas = str(row["Tallas"]).split(',')
-        # El label del selectbox también se verá negro por el CSS global
         talla_sel = st.selectbox("Selecciona tu talla:", tallas)
         
-        # Botón de WhatsApp: Fondo verde, Texto Negro
         mensaje = f"Hola YALIS, deseo comprar: {row['Nombre']} en talla {talla_sel}"
         wa_url = f"https://wa.me/{WHATSAPP_NUMBER}?text={urllib.parse.quote(mensaje)}"
         
@@ -168,4 +164,4 @@ try:
                         comprar_producto(row)
 
 except Exception as e:
-    st.error("Conectando con el catálogo...")
+    st.error("Conectando con el inventario...")
