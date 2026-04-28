@@ -15,22 +15,32 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
 
+/* Configuración base */
 .stApp, [data-testid="stDialog"] { 
     background-color: #FFFFFF; 
     font-family: 'Montserrat', sans-serif !important; 
 }
 
-/* MODAL */
+/* ESTILO DEL DIÁLOGO (VENTANA EMERGENTE) */
 div[data-testid="stDialog"] div[role="dialog"] {
     background-color: #FFFFFF !important;
-    border-radius: 25px !important;
+    border-radius: 20px !important;
 }
 
-/* TARJETAS PRINCIPALES */
+/* Forzar negro en textos informativos del modal */
+div[data-testid="stDialog"] h3, 
+div[data-testid="stDialog"] p, 
+div[data-testid="stDialog"] span, 
+div[data-testid="stDialog"] label {
+    color: #000000 !important;
+}
+
+/* TARJETA DEL CATÁLOGO */
 div[data-testid="stVerticalBlockBorderWrapper"] > div {
     border: 2px solid #E91E63 !important;
     border-radius: 25px !important;
     padding: 20px !important;
+    background-color: white !important;
     transition: all 0.3s ease-in-out !important;
 }
 
@@ -39,6 +49,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
     box-shadow: 0 12px 30px rgba(233, 30, 99, 0.2) !important;
 }
 
+/* TÍTULOS EN EL CATÁLOGO (FUCSIA) */
 .product-title {
     color: #E91E63;
     font-weight: 800;
@@ -49,14 +60,26 @@ div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
     margin-bottom: -15px !important;
 }
 
-/* BOTÓN COMPRAR CATÁLOGO */
+.product-price-cat {
+    font-weight: 600;
+    font-size: 1.3rem;
+    color: #333;
+}
+
+/* BOTÓN COMPRAR EN CATÁLOGO */
 .stButton > button {
     background: transparent !important;
     color: #E91E63 !important;
     border: 2px solid #E91E63 !important;
     border-radius: 50px !important;
     font-weight: 700 !important;
+    text-transform: uppercase;
     width: 100% !important;
+}
+
+.stButton > button:hover {
+    background: #E91E63 !important;
+    color: white !important;
 }
 
 header, footer {visibility: hidden;}
@@ -77,10 +100,10 @@ def get_image_from_drive(url):
 # --- VENTANA EMERGENTE (MODAL) ---
 @st.dialog("Detalle del producto")
 def comprar_producto(row):
-    # Título Fucsia
-    st.markdown(f"<h2 style='color:#E91E63; font-weight:800; text-align:center; margin-bottom:15px;'>{row['Nombre']}</h2>", unsafe_allow_html=True)
+    # NOMBRE EN COLOR FUCSIA
+    st.markdown(f"<h2 style='color:#E91E63; font-family:Montserrat; font-weight:800; text-align:center;'>{row['Nombre']}</h2>", unsafe_allow_html=True)
     
-    col_img, col_det = st.columns([1, 1])
+    col_img, col_det = st.columns([1.2, 1])
     
     with col_img:
         data = get_image_from_drive(row["Imagen 1 link de la primera imagen"])
@@ -88,20 +111,13 @@ def comprar_producto(row):
             st.image(data, use_container_width=True)
             
     with col_det:
-        # Agrupamos Precio y Colección en un solo bloque HTML para control total
-        st.markdown(f"""
-            <div style="text-align: left; margin-bottom: 10px;">
-                <h1 style="color: #000000; font-weight: 800; margin: 0; font-size: 2.5rem;">${row['Precio']}</h1>
-                <p style="color: #000000; margin: 5px 0; font-size: 1rem;"><b>Colección:</b> {row['Coleccion']}</p>
-                <p style="color: #000000; margin: 20px 0 5px 0; font-size: 0.9rem;">Selecciona tu talla:</p>
-            </div>
-        """, unsafe_allow_html=True)
+        # PRECIO Y OTROS TEXTOS EN NEGRO
+        st.markdown(f"<h3 style='color:#000000; font-family:Montserrat;'>${row['Precio']}</h3>", unsafe_allow_html=True)
+        st.markdown(f"<p style='color:#000000;'><b>Colección:</b> {row['Coleccion']}</p>", unsafe_allow_html=True)
         
-        # Selector de Talla
         tallas = str(row["Tallas"]).split(',')
-        talla_sel = st.selectbox("label_invisible", tallas, label_visibility="collapsed", key=f"mod_{row['cod.']}")
+        talla_sel = st.selectbox("Selecciona tu talla:", tallas)
         
-        # Botón WhatsApp
         mensaje = f"Hola YALIS, deseo comprar: {row['Nombre']} en talla {talla_sel}"
         wa_url = f"https://wa.me/{WHATSAPP_NUMBER}?text={urllib.parse.quote(mensaje)}"
         
@@ -111,9 +127,10 @@ def comprar_producto(row):
                     background-color: #25D366; 
                     color: #000000; 
                     text-align: center; 
-                    padding: 15px; 
+                    padding: 12px; 
                     border-radius: 50px; 
                     font-weight: 800; 
+                    font-family: Montserrat;
                     margin-top: 20px;
                     border: 1px solid #128C7E;">
                     PEDIR POR WHATSAPP
@@ -121,23 +138,33 @@ def comprar_producto(row):
             </a>
         ''', unsafe_allow_html=True)
 
-# --- APP PRINCIPAL ---
+# --- CABECERA ---
 st.markdown('<h1 style="text-align:center; color:#E91E63; font-weight:800; margin-bottom:40px;">YALIS LUJO</h1>', unsafe_allow_html=True)
 
+# --- CATÁLOGO ---
 try:
     conn = st.connection("gsheets", type=GSheetsConnection)
     df = conn.read(ttl="5m").dropna(subset=['Nombre'])
-    cols = st.columns(3)
+
+    main_cols = st.columns(3)
     for index, row in df.iterrows():
-        with cols[index % 3]:
+        with main_cols[index % 3]:
             with st.container(border=True):
+                # 1. NOMBRE
                 st.markdown(f'<span class="product-title">{row["Nombre"]}</span>', unsafe_allow_html=True)
-                portada = get_image_from_drive(row["Imagen 1 link de la primera imagen"])
-                if portada: st.image(portada, use_container_width=True)
                 
-                c1, c2 = st.columns([1, 1.2])
-                c1.markdown(f"### ${row['Precio']}")
-                if c2.button("COMPRAR", key=f"btn_{row['cod.']}"):
-                    comprar_producto(row)
-except:
-    st.error("Error de conexión.")
+                # 2. FOTO
+                portada = get_image_from_drive(row["Imagen 1 link de la primera imagen"])
+                if portada:
+                    st.image(portada, use_container_width=True)
+                
+                # 3. PRECIO Y BOTÓN
+                c_pre, c_btn = st.columns([1, 1.2])
+                with c_pre:
+                    st.markdown(f'<div class="product-price-cat">${row["Precio"]}</div>', unsafe_allow_html=True)
+                with c_btn:
+                    if st.button("COMPRAR", key=f"btn_{row['cod.']}"):
+                        comprar_producto(row)
+
+except Exception as e:
+    st.error("Conectando con el inventario...")
