@@ -131,7 +131,7 @@ def comprar_producto(row):
                     border-radius: 50px; 
                     font-weight: 800; 
                     font-family: Montserrat;
-                    margin-top: 20px;
+                    margin-top: 0px;
                     border: 1px solid #128C7E;">
                     WHATSAPP
                 </div>
