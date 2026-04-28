@@ -10,24 +10,35 @@ st.set_page_config(page_title="YALIS | Luxury Footwear", layout="wide")
 
 WHATSAPP_NUMBER = "593978868363"
 
-# --- CSS REFINADO: TARJETAS Y MODAL ---
+# --- CSS INTEGRADO: ESTILOS GLOBALES, TARJETAS Y MODAL ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
 
-/* Aplicar Montserrat a todo el app y diálogos */
+/* Configuración base */
 .stApp, [data-testid="stDialog"] { 
     background-color: #FFFFFF; 
     font-family: 'Montserrat', sans-serif !important; 
 }
 
-/* ESTILO DEL DIÁLOGO (MODAL) */
+/* ESTILO DEL DIÁLOGO (VENTANA EMERGENTE) */
 div[data-testid="stDialog"] div[role="dialog"] {
     background-color: #FFFFFF !important;
     border-radius: 20px !important;
+    color: #000000 !important; /* Texto base negro */
 }
 
-/* TARJETA CON BORDE FUCSIA */
+/* Forzar negro en todos los textos del modal */
+div[data-testid="stDialog"] h1, 
+div[data-testid="stDialog"] h2, 
+div[data-testid="stDialog"] h3, 
+div[data-testid="stDialog"] p, 
+div[data-testid="stDialog"] span, 
+div[data-testid="stDialog"] label {
+    color: #000000 !important;
+}
+
+/* TARJETA DEL CATÁLOGO */
 div[data-testid="stVerticalBlockBorderWrapper"] > div {
     border: 2px solid #E91E63 !important;
     border-radius: 25px !important;
@@ -41,7 +52,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
     box-shadow: 0 12px 30px rgba(233, 30, 99, 0.2) !important;
 }
 
-/* TEXTOS */
+/* TÍTULOS EN EL CATÁLOGO (FUCSIA) */
 .product-title {
     color: #E91E63;
     font-weight: 800;
@@ -52,13 +63,13 @@ div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
     margin-bottom: -15px !important;
 }
 
-.product-price {
+.product-price-cat {
     font-weight: 600;
     font-size: 1.3rem;
     color: #333;
 }
 
-/* BOTONES */
+/* BOTÓN COMPRAR EN CATÁLOGO */
 .stButton > button {
     background: transparent !important;
     color: #E91E63 !important;
@@ -89,11 +100,11 @@ def get_image_from_drive(url):
         return BytesIO(response.content) if response.status_code == 200 else None
     except: return None
 
-# --- VENTANA EMERGENTE PERSONALIZADA ---
+# --- VENTANA EMERGENTE (MODAL) ---
 @st.dialog("Detalle del producto")
 def comprar_producto(row):
-    # Contenedor con fondo blanco y tipografía Montserrat (forzado por CSS)
-    st.markdown(f"<h2 style='color:#E91E63; font-family:Montserrat; font-weight:800; text-align:center;'>{row['Nombre']}</h2>", unsafe_allow_html=True)
+    # Todo el texto en negro forzado por estilo inline y CSS global
+    st.markdown(f"<h2 style='color:#000000; font-family:Montserrat; font-weight:800; text-align:center;'>{row['Nombre']}</h2>", unsafe_allow_html=True)
     
     col_img, col_det = st.columns([1.2, 1])
     
@@ -103,10 +114,11 @@ def comprar_producto(row):
             st.image(data, use_container_width=True)
             
     with col_det:
-        st.markdown(f"<h3 style='font-family:Montserrat;'>${row['Precio']}</h3>", unsafe_allow_html=True)
-        st.write(f"**Colección:** {row['Coleccion']}")
+        st.markdown(f"<h3 style='color:#000000; font-family:Montserrat;'>${row['Precio']}</h3>", unsafe_allow_html=True)
+        st.markdown(f"<p style='color:#000000;'><b>Colección:</b> {row['Coleccion']}</p>", unsafe_allow_html=True)
         
         tallas = str(row["Tallas"]).split(',')
+        # El label del selectbox también se verá negro por el CSS global
         talla_sel = st.selectbox("Selecciona tu talla:", tallas)
         
         # Botón de WhatsApp: Fondo verde, Texto Negro
@@ -150,10 +162,10 @@ try:
                 
                 c_pre, c_btn = st.columns([1, 1.2])
                 with c_pre:
-                    st.markdown(f'<div class="product-price">${row["Precio"]}</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="product-price-cat">${row["Precio"]}</div>', unsafe_allow_html=True)
                 with c_btn:
                     if st.button("COMPRAR", key=f"btn_{row['cod.']}"):
                         comprar_producto(row)
 
 except Exception as e:
-    st.error("Conectando con el inventario...")
+    st.error("Conectando con el catálogo...")
