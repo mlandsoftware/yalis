@@ -10,62 +10,74 @@ st.set_page_config(page_title="YALIS | Luxury Footwear", layout="wide")
 
 WHATSAPP_NUMBER = "593978868363"
 
-# --- CSS REFINADO (CATÁLOGO + MODAL) ---
+# --- CSS REFINADO: FORZANDO BORDE Y EFECTO HOVER ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
 
 .stApp { background-color: #FFFFFF; font-family: 'Montserrat', sans-serif; }
 
-/* ========== TARJETAS DEL CATÁLOGO ========== */
+/* ========== TARJETA ROBUSTA CON BORDE FUCSIA Y EFECTO ========== */
+/* Usamos un selector doble para garantizar que sobreescriba los estilos nativos */
 div[data-testid="stVerticalBlockBorderWrapper"] > div {
-    border: 2px solid #E91E63 !important;
+    border: 2px solid #E91E63 !important; /* Borde fucsia Mary Luna */
     border-radius: 25px !important;
     padding: 20px !important;
     background-color: white !important;
     box-shadow: 0 4px 10px rgba(0,0,0,0.03) !important;
-    transition: all 0.3s ease-in-out !important;
+    transition: all 0.3s ease-in-out !important; /* Transición suave */
 }
 
+/* EFECTO HOVER (Al pasar el mouse) */
 div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
-    transform: translateY(-5px) !important;
-    box-shadow: 0 12px 30px rgba(233, 30, 99, 0.2) !important;
+    transform: translateY(-5px) !important; /* Eleva la tarjeta */
+    border-color: #ff007f !important; /* Brillo fucsia más intenso */
+    box-shadow: 0 12px 30px rgba(233, 30, 99, 0.2) !important; /* Sombra más profunda */
 }
 
-/* ========== TEXTOS ========== */
+/* ========== TEXTOS Y ESPACIOS ========== */
+/* 1. NOMBRE: Más grande y más cerca de la imagen */
 .product-title {
     color: #E91E63;
     font-weight: 800;
-    font-size: 1.4rem;
+    font-size: 1.4rem; /* Grande */
     text-transform: uppercase;
     text-align: center;
     display: block;
-    margin-bottom: -15px !important;
+    margin-bottom: -15px !important; /* Margen negativo para acercar a la imagen */
     line-height: 1.1;
 }
 
-.modal-price {
-    color: #333;
-    font-weight: 800;
-    font-size: 2rem;
-    margin-bottom: 10px;
-}
-
-/* ========== IMÁGENES ========== */
+/* 2. IMAGEN: Proporción Cuadrada */
 [data-testid="stImage"] img {
     border-radius: 15px !important;
     aspect-ratio: 1 / 1 !important;
     object-fit: cover !important;
 }
 
-/* ========== BOTONES Y SELECTORES ========== */
+/* Espaciado interno general de Streamlit */
+[data-testid="stVerticalBlock"] > div {
+    gap: 0.5rem !important;
+}
+
+/* 3. FILA DE PRECIO Y BOTÓN */
+.price-container {
+    font-weight: 600;
+    font-size: 1.3rem;
+    color: #333;
+    display: flex;
+    align-items: center;
+}
+
+/* BOTÓN COMPRAR ESTILO OVALADO */
 .stButton > button {
     background: transparent !important;
     color: #E91E63 !important;
     border: 2px solid #E91E63 !important;
     border-radius: 50px !important;
-    padding: 8px 25px !important;
+    padding: 5px 25px !important;
     font-weight: 700 !important;
+    font-size: 0.85rem !important;
     text-transform: uppercase;
     width: 100% !important;
     transition: all 0.3s ease !important;
@@ -76,23 +88,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
     color: white !important;
 }
 
-/* Estilo para el botón de WhatsApp dentro del modal */
-.wa-button {
-    background-color: #25D366;
-    color: white !important;
-    text-align: center;
-    padding: 12px;
-    border-radius: 50px;
-    font-weight: 800;
-    text-decoration: none;
-    display: block;
-    margin-top: 20px;
-    text-transform: uppercase;
-    transition: background 0.3s ease;
-}
-.wa-button:hover { background-color: #128C7E; }
-
-/* Ocultar elementos nativos */
+/* Ocultar elementos Streamlit */
 header, footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
@@ -108,46 +104,24 @@ def get_image_from_drive(url):
         return BytesIO(response.content) if response.status_code == 200 else None
     except: return None
 
-# --- VENTANA EMERGENTE (MODAL) ESTILIZADA ---
-@st.dialog("DETALLES DE COMPRA")
+@st.dialog("DETALLES")
 def comprar_producto(row):
-    # Nombre centrado y fucsia igual que la tarjeta
-    st.markdown(f"<h2 style='color:#E91E63; text-align:center; font-weight:800; text-transform:uppercase;'>{row['Nombre']}</h2>", unsafe_allow_html=True)
-    
+    st.markdown(f"<h2 style='color:#E91E63; text-align:center;'>{row['Nombre']}</h2>", unsafe_allow_html=True)
     col_img, col_det = st.columns([1.2, 1])
-    
     with col_img:
-        # Contenedor de imagen con el mismo borde que el catálogo
-        with st.container(border=True):
-            img_cols = ["Imagen 1 link de la primera imagen", "Imagen 2 link de la segunda imagen", "Imagen 3 link de la tercera imagen"]
-            tabs = st.tabs(["V1", "V2", "V3"])
-            for i, tab in enumerate(tabs):
-                with tab:
-                    data = get_image_from_drive(row[img_cols[i]])
-                    if data: st.image(data, use_container_width=True)
-                    else: st.caption("Imagen no disponible")
-
+        data = get_image_from_drive(row["Imagen 1 link de la primera imagen"])
+        if data: st.image(data, use_container_width=True)
     with col_det:
-        st.markdown(f"<div class='modal-price'>${row['Precio']}</div>", unsafe_allow_html=True)
-        st.write(f"**Colección:** {row['Coleccion']}")
-        
-        # Selectores con estilo Montserrat
+        st.markdown(f"## ${row['Precio']}")
         tallas = str(row["Tallas"]).split(',')
-        talla_sel = st.selectbox("Selecciona tu talla:", tallas)
-        cantidad = st.number_input("Pares:", min_value=1, step=1, value=1)
-        
-        total = float(row["Precio"]) * cantidad
-        
-        # Mensaje personalizado para WhatsApp
-        mensaje = f"Hola YALIS, deseo comprar:\n👠 *{row['Nombre']}*\n📏 Talla: {talla_sel}\n🔢 Cantidad: {cantidad}\n💰 Total: ${total:.2f}"
-        wa_url = f"https://wa.me/{WHATSAPP_NUMBER}?text={urllib.parse.quote(mensaje)}"
-        
-        # Botón de WhatsApp con diseño concordante
-        st.markdown(f'<a href="{wa_url}" target="_blank" class="wa-button">Confirmar por WhatsApp</a>', unsafe_allow_html=True)
+        st.selectbox("Talla:", tallas)
+        wa_url = f"https://wa.me/{WHATSAPP_NUMBER}?text=Comprar: {row['Nombre']}"
+        st.markdown(f'<a href="{wa_url}" target="_blank" style="text-decoration:none;"><div style="background:#25D366; color:white; text-align:center; padding:12px; border-radius:50px; font-weight:bold; margin-top:20px;">WHATSAPP</div></a>', unsafe_allow_html=True)
 
-# --- CUERPO PRINCIPAL ---
+# --- CABECERA ---
 st.markdown('<h1 style="text-align:center; color:#E91E63; font-weight:800; margin-bottom:40px;">YALIS LUJO</h1>', unsafe_allow_html=True)
 
+# --- CATÁLOGO ---
 try:
     conn = st.connection("gsheets", type=GSheetsConnection)
     df = conn.read(ttl="5m").dropna(subset=['Nombre'])
@@ -155,11 +129,12 @@ try:
     main_cols = st.columns(3)
     for index, row in df.iterrows():
         with main_cols[index % 3]:
+            # El contenedor 'border=True' crea la tarjeta fucsia que ahora sí se estiliza
             with st.container(border=True):
-                # 1. NOMBRE
+                # 1. NOMBRE (CENTRADO Y MÁS GRANDE)
                 st.markdown(f'<span class="product-title">{row["Nombre"]}</span>', unsafe_allow_html=True)
                 
-                # 2. FOTO
+                # 2. FOTO (MÁS PEGADA AL NOMBRE)
                 portada = get_image_from_drive(row["Imagen 1 link de la primera imagen"])
                 if portada:
                     st.image(portada, use_container_width=True)
@@ -167,10 +142,10 @@ try:
                 # 3. PRECIO Y BOTÓN
                 c_pre, c_btn = st.columns([1, 1.2])
                 with c_pre:
-                    st.markdown(f'<div style="font-weight:600; font-size:1.3rem;">${row["Precio"]}</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="price-container">${row["Precio"]}</div>', unsafe_allow_html=True)
                 with c_btn:
                     if st.button("COMPRAR", key=f"btn_{row['cod.']}"):
                         comprar_producto(row)
 
 except Exception as e:
-    st.error("Conectando con el inventario...")
+    st.error("Error al cargar datos.")
