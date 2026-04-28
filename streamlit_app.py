@@ -103,7 +103,6 @@ div[data-testid="stNumberInput"] input {
     text-align: center !important;
 }
 
-/* Tabs del slider - estilo fucsia */
 div[data-testid="stDialog"] .stTabs [data-baseweb="tab-list"] {
     gap: 8px;
     border-bottom: none !important;
@@ -137,13 +136,11 @@ def get_image_from_drive(url):
         return BytesIO(response.content) if response.status_code == 200 else None
     except: return None
 
-# --- VENTANA EMERGENTE (MODAL) CON SLIDER POR TABS ---
+# --- VENTANA EMERGENTE (MODAL) ---
 @st.dialog("Detalle del producto")
 def comprar_producto(row):
-    # NOMBRE EN COLOR FUCSIA
     st.markdown(f"<h2 style='color:#E91E63; font-family:Montserrat; font-weight:800; text-align:center;'>{row['Nombre']}</h2>", unsafe_allow_html=True)
     
-    # Recolectar imágenes disponibles
     imagenes = []
     nombres_cols = ["Imagen 1 link de la primera imagen", "Imagen 2 link de la segunda imagen", "Imagen 3 link de la tercera imagen"]
     for col_img_name in nombres_cols:
@@ -156,31 +153,38 @@ def comprar_producto(row):
     
     with col_img:
         if len(imagenes) > 1:
-            # SLIDER CON TABS DE STREAMLIT
-            # Crear tabs con números como labels
             tabs = st.tabs([f"📷 {i+1}" for i in range(len(imagenes))])
-            
             for i, (tab, img) in enumerate(zip(tabs, imagenes)):
                 with tab:
                     st.image(img, use_container_width=True)
-                    
         elif len(imagenes) == 1:
             st.image(imagenes[0], use_container_width=True)
         else:
             st.info("Sin imagen disponible")
             
     with col_det:
-        # PRECIO Y OTROS TEXTOS EN NEGRO
         st.markdown(f"<h3 style='color:#000000; font-family:Montserrat;'>${row['Precio']}</h3>", unsafe_allow_html=True)
         st.markdown(f"<p style='color:#000000;'><b>Colección:</b> {row['Coleccion']}</p>", unsafe_allow_html=True)
         
         tallas = str(row["Tallas"]).split(',')
         talla_sel = st.selectbox("Selecciona tu talla:", tallas)
         
-        # SELECTOR DE CANTIDAD
         cantidad = st.number_input("Cantidad:", min_value=1, max_value=5, value=1, step=1)
         
-        mensaje = f"Hola YALIS, deseo comprar: {row['Nombre']} (x{cantidad}) en talla {talla_sel}"
+        # Calcular total
+        precio = float(row['Precio']) if pd.notna(row['Precio']) else 0
+        total = precio * cantidad
+        
+        # Mensaje formateado exactamente como lo pidió el usuario
+        mensaje = f"""Hola Yalis, deseo realizar un pedido:
+
+*Producto:* {row['Nombre']}
+*Talla:* {talla_sel}
+*Cantidad:* {cantidad}
+*Total:* ${total:.2f}
+
+Código: {row['cod.']}"""
+        
         wa_url = f"https://wa.me/{WHATSAPP_NUMBER}?text={urllib.parse.quote(mensaje)}"
         
         st.markdown(f'''
