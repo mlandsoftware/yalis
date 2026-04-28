@@ -11,89 +11,181 @@ st.set_page_config(page_title="YALIS | Luxury Footwear", layout="wide")
 # WhatsApp Config (Ecuador)
 WHATSAPP_NUMBER = "593978868363"
 
-# --- CSS MAESTRO (Diseño de Lujo & Responsive) ---
 st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500&family=Montserrat:wght@300;400;600&display=swap');
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Montserrat:wght@300;400;500;600&display=swap');
 
-    /* Forzar fondo blanco y texto oscuro (Agnóstico al tema) */
-    .stApp { background-color: #FFFFFF; }
-    html, body, [data-testid="stAppViewContainer"] {
-        color: #1A1A1A !important;
-        font-family: 'Montserrat', sans-serif;
+/* Fondo general con un sutil tono marfil (más cálido que el blanco puro) */
+.stApp {
+    background-color: #FBF9F4;
+}
+
+html, body, [data-testid="stAppViewContainer"] {
+    color: #1A1A1A !important;
+    font-family: 'Montserrat', sans-serif;
+}
+
+/* ========== TARJETA DE PRODUCTO ========== */
+.product-card {
+    background: #FFFFFF;
+    border-radius: 28px;
+    padding: 0 0 24px 0;
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06),
+                0 0 0 1px rgba(212, 175, 55, 0.05) inset;
+    margin-bottom: 36px;
+    text-align: center;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                box-shadow 0.35s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 30px 50px rgba(0, 0, 0, 0.12),
+                0 0 0 1px rgba(212, 175, 55, 0.3) inset;
+}
+
+/* Imagen dentro de la tarjeta: tamaño uniforme y recorte limpio */
+.product-card img {
+    width: 100%;
+    height: 280px;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.6s ease;
+}
+
+.product-card:hover img {
+    transform: scale(1.04);
+}
+
+/* ========== INFORMACIÓN DEL PRODUCTO ========== */
+.product-info {
+    padding: 20px 18px 10px 18px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.product-title {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 1.15rem;
+    letter-spacing: 0.3px;
+    color: #2B2B2B;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 6px;
+    padding: 0 4px;
+    line-height: 1.3;
+}
+
+.product-price {
+    font-family: 'Cinzel', serif;
+    font-size: 1.5rem;
+    color: #C5A028;
+    font-weight: 500;
+    letter-spacing: 1px;
+    margin: 4px 0 12px 0;
+}
+
+/* ========== BOTÓN (Streamlit) ========== */
+.stButton > button {
+    background: linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 100%) !important;
+    color: #D4AF37 !important;
+    border-radius: 50px !important;
+    border: 1px solid #D4AF37 !important;
+    padding: 12px 28px !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    width: 82% !important;
+    margin: 0 auto !important;
+    display: block;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
+    transition: all 0.3s ease;
+}
+
+.stButton > button:hover {
+    background: linear-gradient(135deg, #D4AF37 0%, #C5A028 100%) !important;
+    color: #1A1A1A !important;
+    border-color: #D4AF37 !important;
+    box-shadow: 0 8px 20px rgba(212, 175, 55, 0.5);
+    transform: scale(1.02);
+}
+
+/* ========== PESTAÑAS DEL DIÁLOGO ========== */
+.stTabs [data-baseweb="tab-list"] {
+    justify-content: center;
+    gap: 32px;
+    padding-bottom: 8px;
+}
+
+.stTabs [data-baseweb="tab"] {
+    color: #888888 !important;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    transition: color 0.2s ease;
+}
+
+.stTabs [aria-selected="true"] {
+    color: #D4AF37 !important;
+    border-bottom-color: #D4AF37 !important;
+}
+
+/* ========== OCULTAR ELEMENTOS DE STREAMLIT ========== */
+header {visibility: hidden;}
+footer {visibility: hidden;}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 992px) {
+    /* En tablet: 2 columnas */
+    [data-testid="column"] {
+        width: 50% !important;
+        flex: 1 1 50% !important;
     }
+}
 
-    /* Contenedor de la Tarjeta */
-    .product-card {
-        background-color: #ffffff;
-        border-radius: 25px;
-        padding: 0px 0px 20px 0px;
-        border: 1px solid #f0f0f0;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-        margin-bottom: 30px;
-        text-align: center;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        transition: transform 0.3s ease;
+@media (max-width: 768px) {
+    /* En móvil: 1 columna, fuentes más pequeñas */
+    [data-testid="column"] {
+        width: 100% !important;
+        flex: 1 1 100% !important;
     }
-    .product-card:hover { transform: translateY(-5px); }
-
-    /* Info del producto dentro de la tarjeta */
-    .product-info { padding: 15px; }
+    .product-card img {
+        height: 230px;
+    }
     .product-title {
-        font-family: 'Montserrat', sans-serif;
-        font-size: 1.1em;
-        font-weight: 600;
-        color: #1a1a1a;
-        margin-bottom: 5px;
-        min-height: 50px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        font-size: 1rem;
+        min-height: 40px;
     }
     .product-price {
-        font-family: 'Montserrat', sans-serif;
-        font-size: 1.3em;
-        color: #D4AF37;
-        font-weight: 400;
+        font-size: 1.3rem;
     }
+    .stButton > button {
+        padding: 10px 24px !important;
+        font-size: 0.75rem !important;
+    }
+}
 
-    /* Botón Streamlit Personalizado */
-    .stButton>button {
-        background: #1a1a1a !important;
-        color: #D4AF37 !important;
-        border-radius: 50px !important;
-        border: 1px solid #D4AF37 !important;
-        padding: 8px 20px !important;
-        font-size: 0.8em !important;
-        font-weight: 600 !important;
+/* Pequeño ajuste para que el texto del botón no se corte en resoluciones muy pequeñas */
+@media (max-width: 480px) {
+    .stButton > button {
         letter-spacing: 1px;
-        width: 85% !important;
-        margin: 0 auto !important;
-        display: block;
+        width: 90% !important;
     }
-    .stButton>button:hover {
-        background: #D4AF37 !important;
-        color: #1a1a1a !important;
-    }
-
-    /* Slider de Imágenes (Tabs) */
-    .stTabs [data-baseweb="tab-list"] { justify-content: center; gap: 20px; }
-    .stTabs [data-baseweb="tab"] { color: #888 !important; }
-    .stTabs [aria-selected="true"] { color: #D4AF37 !important; border-bottom-color: #D4AF37 !important; }
-
-    /* Ocultar elementos de Streamlit */
-    header {visibility: hidden;}
-    footer {visibility: hidden;}
-    
-    /* Responsive Grid */
-    @media (max-width: 768px) {
-        [data-testid="column"] { width: 100% !important; flex: 1 1 100% !important; }
-    }
-    </style>
-    """, unsafe_allow_html=True)
+}
+</style>
+""", unsafe_allow_html=True)
 
 # --- LÓGICA DE IMÁGENES GOOGLE DRIVE ---
 @st.cache_data(show_spinner=False)
