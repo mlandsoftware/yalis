@@ -34,24 +34,19 @@ div[data-testid="stDialog"] label {
     color: #000000 !important;
 }
 
-/* TARJETA DEL CATÁLOGO - BORDE FUCSIA CORREGIDO */
-div[data-testid="stVerticalBlockBorderWrapper"] {
+/* TARJETA DEL CATÁLOGO - BORDE FUCSIA EN EL CONTENEDOR CORRECTO */
+/* Selector exacto según tu inspección: div.stVerticalBlock.st-emotion-cache-... */
+div[data-testid="stVerticalBlockBorderWrapper"] > div[class*="st-emotion-cache"] {
     border: 2px solid #E91E63 !important;
     border-radius: 25px !important;
     background-color: white !important;
     transition: all 0.3s ease-in-out !important;
+    padding: 20px !important;
 }
 
-div[data-testid="stVerticalBlockBorderWrapper"]:hover {
+div[data-testid="stVerticalBlockBorderWrapper"] > div[class*="st-emotion-cache"]:hover {
     transform: translateY(-5px) !important;
     box-shadow: 0 12px 30px rgba(233, 30, 99, 0.2) !important;
-}
-
-/* Contenedor interno de la tarjeta */
-div[data-testid="stVerticalBlockBorderWrapper"] > div {
-    padding: 20px !important;
-    background-color: white !important;
-    border-radius: 23px !important;
 }
 
 .tarjeta-imagen {
@@ -94,7 +89,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] > div {
     color: white !important;
 }
 
-/* BARRA DE BÚSQUEDA - ESTILO CORREGIDO */
+/* BARRA DE BÚSQUEDA - ESTILO LIMPIO */
 div[data-testid="stTextInput"] {
     max-width: 500px;
     margin: 0 auto 30px auto;
@@ -120,7 +115,6 @@ div[data-testid="stTextInput"] input::placeholder {
     color: #999999 !important;
 }
 
-/* Quitar fondo oscuro del input */
 div[data-testid="stTextInput"] > div > div {
     background-color: #FFFFFF !important;
     border-radius: 50px !important;
@@ -234,7 +228,7 @@ Código: {row['cod.']}"""
 # --- CABECERA ---
 st.markdown('<h1 style="text-align:center; color:#E91E63; font-weight:800; margin-bottom:10px;">YALIS SHOES</h1>', unsafe_allow_html=True)
 
-# BUSCADOR DE PRODUCTOS - SIN HTML EXTERNO
+# BUSCADOR DE PRODUCTOS
 busqueda = st.text_input("Buscar", placeholder="🔍 Buscar modelo...", label_visibility="collapsed")
 
 # --- CATÁLOGO ---
