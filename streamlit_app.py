@@ -103,35 +103,23 @@ div[data-testid="stNumberInput"] input {
     text-align: center !important;
 }
 
-/* Botones de navegación del slider en modal */
-div[data-testid="stDialog"] .stButton > button[key*="slider_"] {
-    background: #E91E63 !important;
-    color: white !important;
-    border-radius: 50% !important;
-    width: 40px !important;
-    height: 40px !important;
-    min-width: 40px !important;
-    padding: 0 !important;
-    font-weight: 800 !important;
-    border: none !important;
+/* Tabs del slider - estilo fucsia */
+div[data-testid="stDialog"] .stTabs [data-baseweb="tab-list"] {
+    gap: 8px;
+    border-bottom: none !important;
 }
 
-div[data-testid="stDialog"] .stButton > button[key*="slider_"]:hover {
-    background: #C2185B !important;
-}
-
-/* Miniaturas en modal */
-div[data-testid="stDialog"] .stButton > button[key*="thumb_"] {
+div[data-testid="stDialog"] .stTabs [data-baseweb="tab"] {
+    height: 60px !important;
+    padding: 2px !important;
     background: transparent !important;
     border: 2px solid #ddd !important;
-    border-radius: 8px !important;
-    padding: 2px !important;
-    width: 100% !important;
-    height: 50px !important;
+    border-radius: 10px !important;
 }
 
-div[data-testid="stDialog"] .stButton > button[key*="thumb_"]:hover {
-    border-color: #E91E63 !important;
+div[data-testid="stDialog"] .stTabs [aria-selected="true"] {
+    border: 3px solid #E91E63 !important;
+    background: white !important;
 }
 
 header, footer {visibility: hidden;}
@@ -149,7 +137,7 @@ def get_image_from_drive(url):
         return BytesIO(response.content) if response.status_code == 200 else None
     except: return None
 
-# --- VENTANA EMERGENTE (MODAL) CON SLIDER NATIVO ---
+# --- VENTANA EMERGENTE (MODAL) CON SLIDER POR TABS ---
 @st.dialog("Detalle del producto")
 def comprar_producto(row):
     # NOMBRE EN COLOR FUCSIA
@@ -168,52 +156,13 @@ def comprar_producto(row):
     
     with col_img:
         if len(imagenes) > 1:
-            # SLIDER CON SESSION_STATE
-            slider_key = f"slider_idx_{row['cod.']}"
-            if slider_key not in st.session_state:
-                st.session_state[slider_key] = 0
+            # SLIDER CON TABS DE STREAMLIT
+            # Crear tabs con números como labels
+            tabs = st.tabs([f"📷 {i+1}" for i in range(len(imagenes))])
             
-            idx_actual = st.session_state[slider_key]
-            
-            # Imagen principal
-            st.image(imagenes[idx_actual], use_container_width=True)
-            
-            # Contador
-            st.markdown(f"<p style='text-align:center;color:#888;font-size:0.8rem;margin:5px 0;'>📷 {idx_actual + 1} / {len(imagenes)}</p>", unsafe_allow_html=True)
-            
-            # Navegación: flechas + miniaturas
-            nav_cols = st.columns([1] + [1]*len(imagenes) + [1])
-            
-            # Flecha anterior
-            with nav_cols[0]:
-                if st.button("◀", key=f"slider_prev_{row['cod.']}"):
-                    st.session_state[slider_key] = (idx_actual - 1) % len(imagenes)
-                    st.rerun()
-            
-            # Miniaturas
-            for i, img in enumerate(imagenes):
-                with nav_cols[i + 1]:
-                    # Mostrar miniatura como imagen + botón invisible encima
-                    img.seek(0)
-                    img_b64 = base64.b64encode(img.getvalue()).decode()
-                    border = "3px solid #E91E63" if i == idx_actual else "2px solid #ddd"
-                    st.markdown(
-                        f'<div style="border:{border};border-radius:8px;overflow:hidden;height:50px;">'
-                        f'<img src="data:image/jpeg;base64,{img_b64}" style="width:100%;height:100%;object-fit:cover;">'
-                        f'</div>',
-                        unsafe_allow_html=True
-                    )
-                    # Botón para seleccionar esta imagen
-                    btn_label = "●" if i == idx_actual else "○"
-                    if st.button(btn_label, key=f"slider_thumb_{row['cod.']}_{i}"):
-                        st.session_state[slider_key] = i
-                        st.rerun()
-            
-            # Flecha siguiente
-            with nav_cols[-1]:
-                if st.button("▶", key=f"slider_next_{row['cod.']}"):
-                    st.session_state[slider_key] = (idx_actual + 1) % len(imagenes)
-                    st.rerun()
+            for i, (tab, img) in enumerate(zip(tabs, imagenes)):
+                with tab:
+                    st.image(img, use_container_width=True)
                     
         elif len(imagenes) == 1:
             st.image(imagenes[0], use_container_width=True)
@@ -290,9 +239,6 @@ try:
                     st.markdown(f'<div class="product-price-cat">${row["Precio"]}</div>', unsafe_allow_html=True)
                 with c_btn:
                     if st.button("COMPRAR", key=f"btn_{row['cod.']}"):
-                        # Resetear slider al abrir
-                        slider_key = f"slider_idx_{row['cod.']}"
-                        st.session_state[slider_key] = 0
                         comprar_producto(row)
 
 except Exception as e:
