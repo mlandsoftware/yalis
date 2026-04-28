@@ -13,89 +13,103 @@ WHATSAPP_NUMBER = "593978868363"
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
 
-/* FONDO DEGRADADO SEGÚN LA IMAGEN */
+/* FONDO CON FORMAS ORGÁNICAS (Inspirado en las ondas púrpuras de la imagen) */
 .stApp {
-    background: linear-gradient(135deg, #d4f3ef 0%, #e8f0ff 50%, #fdf2f8 100%);
+    background-color: #FFFFFF;
+    background-image: radial-gradient(circle at 100% 0%, #bd93d8 0%, #ffffff 40%),
+                      radial-gradient(circle at 0% 100%, #bd93d8 0%, #ffffff 40%);
+    background-attachment: fixed;
+}
+
+html, body, [data-testid="stAppViewContainer"] {
+    color: #4A4A4A !important;
     font-family: 'Montserrat', sans-serif;
 }
 
-/* TARJETA CON ESTILO DE LA IMAGEN (BORDE CURVO ASIMÉTRICO) */
+/* ========== TARJETA DE PRODUCTO (Limpia y moderna) ========== */
 .product-card {
     background: #FFFFFF;
-    /* El truco del diseño: bordes redondeados solo en esquinas opuestas */
-    border-radius: 0px 80px 0px 80px; 
-    padding: 25px;
-    margin-bottom: 40px;
+    border-radius: 40px; /* Bordes muy redondeados como en los elementos de la imagen */
+    padding: 15px 15px 30px 15px;
+    border: 2px solid #F0F0F0;
+    margin-bottom: 30px;
     text-align: center;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-    transition: all 0.4s ease;
-    border: none;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 10px 20px rgba(189, 147, 216, 0.1);
 }
 
 .product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    transform: scale(1.03);
+    border-color: #ff007f; /* Color Fucsia de la imagen */
+    box-shadow: 0 15px 30px rgba(255, 0, 127, 0.15);
 }
 
-/* IMAGEN DENTRO DE LA TARJETA */
+/* Imagen con bordes redondeados suaves */
 .product-card img {
-    width: 100%;
-    border-radius: 0px 60px 0px 60px; /* Sigue el patrón de la tarjeta */
-    object-fit: cover;
-    height: 250px;
-    margin-bottom: 20px;
+    border-radius: 30px;
+    margin-bottom: 15px;
+    transition: 0.3s;
 }
 
-/* TÍTULOS Y TEXTO */
+/* ========== TEXTOS ESTILO "ONLINE SHOPPING" ========== */
 .product-title {
-    font-weight: 600;
+    font-weight: 800;
     font-size: 1.2rem;
-    color: #333;
+    color: #ff007f; /* Fucsia vibrante */
     text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 10px;
+    margin-top: 10px;
+    letter-spacing: -0.5px;
 }
 
 .product-price {
-    font-weight: 300;
-    font-size: 1.1rem;
-    color: #666;
-    margin-bottom: 20px;
+    font-weight: 600;
+    font-size: 1.4rem;
+    color: #5c2d91; /* Púrpura oscuro */
+    margin: 5px 0 20px 0;
 }
 
-/* BOTÓN REDONDEADO "COMPRA TODO" ESTILO IMAGEN */
+/* ========== BOTONES "GET STARTED" (Estilo Píldora) ========== */
 .stButton > button {
-    background-color: #bee3e9 !important; /* Color celeste pastel del botón de la imagen */
-    color: #1a1a1a !important;
-    border: none !important;
-    border-radius: 50px !important; /* Completamente redondeado */
-    padding: 10px 40px !important;
-    font-weight: 600 !important;
-    font-size: 0.9rem !important;
-    text-transform: none !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05) !important;
+    background: transparent !important;
+    color: #ff007f !important;
+    border: 2px solid #ff007f !important;
+    border-radius: 50px !important;
+    padding: 10px 30px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
     transition: all 0.3s ease !important;
-    width: auto !important;
-    margin: 0 auto !important;
-    display: block;
+    width: 90% !important;
 }
 
 .stButton > button:hover {
-    background-color: #a8dadc !important;
-    transform: scale(1.05);
+    background: #ff007f !important;
+    color: white !important;
+    box-shadow: 0 5px 15px rgba(255, 0, 127, 0.4);
 }
 
-/* OCULTAR ELEMENTOS INNECESARIOS */
-header, footer {visibility: hidden;}
+/* ========== CABECERA DINÁMICA ========== */
+.main-header {
+    text-align: left;
+    padding: 20px;
+}
 
-/* AJUSTES DE COLUMNAS */
-[data-testid="column"] {
-    padding: 1rem !important;
+.brand-name {
+    color: #ff007f;
+    font-weight: 800;
+    font-size: 1.5rem;
+}
+
+/* Ocultar elementos de Streamlit */
+header {visibility: hidden;}
+footer {visibility: hidden;}
+
+/* Adaptabilidad para móviles */
+@media (max-width: 768px) {
+    .product-card { border-radius: 30px; }
+    .product-title { font-size: 1rem; }
 }
 </style>
 """, unsafe_allow_html=True)
