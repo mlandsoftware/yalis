@@ -11,74 +11,111 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ==================== CARGA DE DATOS Y SECRETOS ====================
+# ==================== CARGA DE DATOS ====================
 CSV_URL = st.secrets.get("google_sheets", {}).get("csv_url", "https://docs.google.com/spreadsheets/d/e/2PACX-1vRvD-qp4xFa_9tfSAPcQpfxRz_bOx9xjczcLAWDwM2avDd1HBpB0UEnC93bqdsOJ5a6ULVV-T7ThoI_/pub?gid=0&single=true&output=csv")
 WHATSAPP_NUMBER = st.secrets.get("google_sheets", {}).get("whatsapp_number", "59398868363")
 
-# ==================== ESTILOS CSS PROFESIONALES ====================
+# ==================== DISEÑO PROFESIONAL (CSS CUSTOM) ====================
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
 
-    html, body, [class*="st-"] {
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        color: #1a1a1a;
+    /* Variables de marca */
+    :root {
+        --primary-accent: #e94560;
+        --soft-bg: #f9f9fb;
+        --card-shadow: 0 10px 25px rgba(0,0,0,0.05);
     }
 
-    /* Ocultar elementos innecesarios */
-    #MainMenu, footer, header {visibility: hidden;}
+    .stApp { background-color: var(--soft-bg); }
     
-    .stApp {
-        background-color: #fcfcfc;
+    /* Ocultar basura visual de Streamlit */
+    #MainMenu, footer, header {visibility: hidden;}
+
+    /* Títulos Elegantes */
+    .brand-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 4rem;
+        font-weight: 700;
+        text-align: center;
+        letter-spacing: -2px;
+        margin-bottom: 0px;
+    }
+    .brand-subtitle {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        text-align: center;
+        color: #666;
+        font-size: 1rem;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 3rem;
     }
 
-    /* Botón principal y de Link */
-    div.stButton > button, a[data-testid="stBaseButton-secondary"] {
-        background: #000000 !important;
-        color: #ffffff !important;
-        border-radius: 6px !important;
+    /* Tarjetas de Producto (Cards) */
+    div[data-testid="stVerticalBlock"] > div[style*="border: 1px solid"] {
+        background-color: white !important;
         border: none !important;
+        border-radius: 20px !important;
+        box-shadow: var(--card-shadow) !important;
+        padding: 1.5rem !important;
+        transition: transform 0.3s ease;
+    }
+    
+    div[data-testid="stVerticalBlock"] > div[style*="border: 1px solid"]:hover {
+        transform: translateY(-5px);
+    }
+
+    /* Botón Negro Minimalista */
+    div.stButton > button {
+        background-color: #000 !important;
+        color: #fff !important;
+        border-radius: 50px !important;
         font-weight: 600 !important;
-        height: 45px !important;
+        letter-spacing: 0.5px !important;
+        border: none !important;
+        padding: 0.6rem 2rem !important;
         width: 100% !important;
-        transition: all 0.3s ease !important;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-decoration: none;
+        text-transform: uppercase;
+        font-size: 0.8rem !important;
     }
 
-    div.stButton > button:hover, a[data-testid="stBaseButton-secondary"]:hover {
-        background: #e94560 !important;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(233, 69, 96, 0.3) !important;
-        color: white !important;
+    div.stButton > button:hover {
+        background-color: var(--primary-accent) !important;
+        box-shadow: 0 8px 15px rgba(233, 69, 96, 0.2) !important;
     }
 
-    /* Estilo para precios */
-    .price-tag {
-        font-size: 1.4rem;
+    /* Precios y Etiquetas */
+    .product-cat {
+        color: var(--primary-accent);
+        font-size: 0.75rem;
         font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .product-price {
+        font-size: 1.5rem;
+        font-weight: 700;
         color: #1a1a1a;
-        margin: 5px 0;
     }
 
-    /* Sidebar (Carrito) */
-    [data-testid="stSidebar"] {
-        background-color: #ffffff !important;
-        border-left: 1px solid #eee;
+    /* Selectores de Talla */
+    .stSelectbox div[data-baseweb="select"] {
+        border-radius: 12px !important;
+        border: 1px solid #eee !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# ==================== LÓGICA DE NEGOCIO ====================
+# ==================== LÓGICA DE DATOS ====================
 
-def get_google_drive_direct_url(url):
-    """Convierte links de Drive en links de imagen directa."""
+def get_image_url(url):
+    """Mejora la compatibilidad de imágenes de Drive"""
     if 'drive.google.com' in url:
-        match = re.search(r'(?:id=|[d]/)([\w-]+)', url)
-        if match:
-            return f"https://drive.google.com/uc?export=view&id={match.group(1)}"
+        # Extrae el ID del archivo
+        file_id = ""
+        if 'id=' in url: file_id = url.split('id=')[-1]
+        elif '/d/' in url: file_id = url.split('/d/')[1].split('/')[0]
+        return f"https://drive.google.com/uc?export=view&id={file_id}"
     return url
 
 @st.cache_data(ttl=300)
@@ -87,116 +124,99 @@ def load_data():
         df = pd.read_csv(CSV_URL)
         prods = []
         for idx, row in df.iterrows():
-            img_list = []
+            # Limpiamos precios que puedan traer símbolos extraños
+            raw_price = str(row.get('Precio', 0)).replace('$', '').replace(',', '.')
+            try: price = float(raw_price)
+            except: price = 0.0
+            
+            # Buscamos la primera imagen válida
+            img = ""
             for col in df.columns:
                 if 'imagen' in col.lower():
                     val = str(row.get(col, ''))
                     if val != 'nan' and len(val) > 10:
-                        img_list.append(get_google_drive_direct_url(val))
-            
-            tallas = [t.strip() for t in str(row.get('Tallas', '')).split(',') if t.strip()]
-            
+                        img = get_image_url(val)
+                        break
+
             prods.append({
-                'id': str(row.get('cod.', idx)),
-                'name': str(row.get('Nombre', 'Producto')),
-                'price': float(str(row.get('Precio', 0)).replace('$', '').replace(',', '.')),
-                'category': str(row.get('Coleccion', 'General')),
+                'id': f"prod_{idx}",
+                'name': str(row.get('Nombre', 'Calzado Premium')),
+                'price': price,
+                'category': str(row.get('Coleccion', 'Nueva Colección')),
                 'code': str(row.get('cod.', '')),
-                'images': img_list,
-                'sizes': tallas
+                'image': img,
+                'sizes': [t.strip() for t in str(row.get('Tallas', '35,36,37')).split(',') if t.strip()]
             })
         return prods
-    except Exception as e:
-        st.error(f"Error cargando datos: {e}")
-        return []
+    except: return []
 
-if 'cart' not in st.session_state:
-    st.session_state.cart = []
+if 'cart' not in st.session_state: st.session_state.cart = []
 
-# ==================== INTERFAZ DE USUARIO ====================
+# ==================== INTERFAZ PRINCIPAL ====================
 
-st.markdown("""
-    <div style="text-align: center; padding: 2rem 0 1rem 0;">
-        <h1 style="font-size: 3rem; font-weight: 800; letter-spacing: -1px; margin-bottom:0;">YALIS <span style="color:#e94560;">CALZADO</span></h1>
-        <p style="color: #666; font-size: 1.1rem;">Elegancia y confort en cada paso | Colección 2026</p>
-    </div>
-""", unsafe_allow_html=True)
+# Encabezado Hero
+st.markdown('<h1 class="brand-title">YALIS <span style="color:#e94560">CALZADO</span></h1>', unsafe_allow_html=True)
+st.markdown('<p class="brand-subtitle">The Art of Walking | Ecuador 2026</p>', unsafe_allow_html=True)
 
-products = load_data()
+all_prods = load_data()
 
-# FILTROS
-col_f1, col_f2 = st.columns([1, 1])
-with col_f1:
-    categories = ["Todas las colecciones"] + sorted(list(set(p['category'] for p in products)))
-    cat_filter = st.selectbox("Filtrar por Colección", categories)
-with col_f2:
-    search_query = st.text_input("Buscar calzado...", placeholder="Nombre o código")
+# Filtros integrados en el diseño
+f_col1, f_col2, f_col3 = st.columns([2, 2, 1])
+with f_col1:
+    search = st.text_input("🔍 ¿Qué buscas hoy?", placeholder="Ej: Sandalias Plateadas...")
+with f_col2:
+    cats = ["Todas"] + sorted(list(set(p['category'] for p in all_prods)))
+    cat_sel = st.selectbox("Colección", cats)
 
-filtered_prods = [p for p in products if 
-    (cat_filter == "Todas las colecciones" or p['category'] == cat_filter) and 
-    (search_query.lower() in p['name'].lower() or search_query.lower() in p['code'].lower())]
+# Filtrado lógico
+filtered = [p for p in all_prods if (cat_sel == "Todas" or p['category'] == cat_sel) and (search.lower() in p['name'].lower())]
 
-st.divider()
+st.markdown("<br>", unsafe_allow_html=True)
 
-# GRID DE PRODUCTOS (Adaptable)
-if not filtered_prods:
-    st.info("No se encontraron productos con estos filtros.")
+# Grid de productos
+if not filtered:
+    st.warning("No encontramos ese estilo por ahora. ¡Intenta con otra búsqueda!")
 else:
-    # Definimos el número de columnas para el grid
-    N_COLS = 4
-    for i in range(0, len(filtered_prods), N_COLS):
-        cols = st.columns(N_COLS)
-        for j, product in enumerate(filtered_prods[i:i+N_COLS]):
-            with cols[j]:
-                with st.container(border=True):
-                    if product['images']:
-                        st.image(product['images'][0], use_container_width=True)
-                    else:
-                        st.image("https://via.placeholder.com/400x400?text=Sin+Imagen", use_container_width=True)
-                    
-                    st.markdown(f"<span style='color:#e94560; font-size:0.8rem; font-weight:600;'>{product['category']}</span>", unsafe_allow_html=True)
-                    st.markdown(f"**{product['name']}**")
-                    st.markdown(f"<p class='price-tag'>${product['price']:.2f}</p>", unsafe_allow_html=True)
-                    
-                    selected_size = st.selectbox("Talla:", product['sizes'], key=f"size_{product['id']}_{i+j}")
-                    
-                    if st.button("Añadir al Carrito", key=f"add_{product['id']}_{i+j}"):
-                        st.session_state.cart.append({
-                            'name': product['name'],
-                            'price': product['price'],
-                            'size': selected_size,
-                            'code': product['code']
-                        })
-                        st.toast(f"✅ {product['name']} añadido")
+    cols = st.columns(3) # 3 productos por fila para que se vean grandes y lujosos
+    for i, p in enumerate(filtered):
+        with cols[i % 3]:
+            with st.container(border=True):
+                if p['image']:
+                    st.image(p['image'], use_container_width=True)
+                else:
+                    st.image("https://via.placeholder.com/500x600?text=Yalis+Calzado", use_container_width=True)
+                
+                st.markdown(f'<p class="product-cat">{p['category']}</p>', unsafe_allow_html=True)
+                st.markdown(f"### {p['name']}")
+                st.markdown(f'<p class="product-price">${p['price']:.2f}</p>', unsafe_allow_html=True)
+                
+                talla = st.selectbox("Selecciona tu talla", p['sizes'], key=f"sz_{p['id']}")
+                
+                if st.button("Añadir al Carrito", key=f"btn_{p['id']}"):
+                    st.session_state.cart.append({'name': p['name'], 'price': p['price'], 'size': talla})
+                    st.toast(f"✨ {p['name']} listo en tu carrito")
 
-# ==================== SIDEBAR (CARRITO) ====================
+# Carrito en Sidebar (Diseño Limpio)
 with st.sidebar:
-    st.header("🛒 Tu Pedido")
+    st.markdown("## 🛒 Mi Selección")
     if not st.session_state.cart:
-        st.write("El carrito está vacío.")
+        st.info("Tu carrito espera por un par perfecto.")
     else:
         total = 0
-        whatsapp_text = "¡Hola Yalis Calzado! 👋 Deseo realizar este pedido:\n\n"
-        
         for i, item in enumerate(st.session_state.cart):
-            with st.container(border=True):
-                st.write(f"**{item['name']}**")
-                st.write(f"Talla: {item['size']} | ${item['price']:.2f}")
-                if st.button("Quitar", key=f"remove_{i}"):
-                    st.session_state.cart.pop(i)
-                    st.rerun()
-                total += item['price']
-                whatsapp_text += f"• {item['name']} (Talla: {item['size']}) - ${item['price']:.2f}\n"
+            st.markdown(f"**{item['name']}** (Talla {item['size']})")
+            st.write(f"${item['price']:.2f}")
+            total += item['price']
         
         st.divider()
-        st.subheader(f"Total: ${total:.2f}")
+        st.markdown(f"### Total: ${total:.2f}")
         
-        whatsapp_text += f"\n💰 *Total a pagar: ${total:.2f}*"
-        wa_url = f"https://wa.me/{WHATSAPP_NUMBER}?text={quote(whatsapp_text)}"
+        msg = f"Hola Yalis! Quiero comprar:\n" + "\n".join([f"- {i['name']} ({i['size']})" for i in st.session_state.cart])
+        wa_link = f"https://wa.me/{WHATSAPP_NUMBER}?text={quote(msg)}"
         
-        st.link_button("🚀 Enviar a WhatsApp", wa_url)
+        st.link_button("💎 FINALIZAR COMPRA", wa_link)
         if st.button("Vaciar Carrito"):
             st.session_state.cart = []
             st.rerun()
 
-st.markdown("<br><br><center><p style='color:#888;'>© 2026 Yalis Calzado - Hecho con ❤️ en Ecuador</p></center>", unsafe_allow_html=True)
+st.markdown("<br><center><p style='color:#bbb; font-size:0.7rem;'>PRIVACY POLICY | TERMS OF SERVICE | © 2026 YALIS</p></center>", unsafe_allow_html=True)
