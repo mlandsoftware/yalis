@@ -10,31 +10,41 @@ st.set_page_config(page_title="YALIS | Luxury Footwear", layout="wide")
 
 WHATSAPP_NUMBER = "593978868363"
 
-# --- CSS REFINADO: AJUSTE DE TAMAÑO Y ESPACIOS ---
+# --- CSS REFINADO: FORZANDO BORDE Y EFECTO HOVER ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
 
 .stApp { background-color: #FFFFFF; font-family: 'Montserrat', sans-serif; }
 
-/* TARJETA CON BORDE FUCSIA */
-[data-testid="stVerticalBlockBorderWrapper"] {
-    border: 2px solid #E91E63 !important;
+/* ========== TARJETA ROBUSTA CON BORDE FUCSIA Y EFECTO ========== */
+/* Usamos un selector doble para garantizar que sobreescriba los estilos nativos */
+div[data-testid="stVerticalBlockBorderWrapper"] > div {
+    border: 2px solid #E91E63 !important; /* Borde fucsia Mary Luna */
     border-radius: 25px !important;
-    padding: 15px 15px 25px 15px !important;
+    padding: 20px !important;
     background-color: white !important;
-    box-shadow: 0 4px 15px rgba(233, 30, 99, 0.05) !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03) !important;
+    transition: all 0.3s ease-in-out !important; /* Transición suave */
 }
 
+/* EFECTO HOVER (Al pasar el mouse) */
+div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
+    transform: translateY(-5px) !important; /* Eleva la tarjeta */
+    border-color: #ff007f !important; /* Brillo fucsia más intenso */
+    box-shadow: 0 12px 30px rgba(233, 30, 99, 0.2) !important; /* Sombra más profunda */
+}
+
+/* ========== TEXTOS Y ESPACIOS ========== */
 /* 1. NOMBRE: Más grande y más cerca de la imagen */
 .product-title {
     color: #E91E63;
     font-weight: 800;
-    font-size: 1.4rem; /* Aumentado 2 unidades aprox */
+    font-size: 1.4rem; /* Grande */
     text-transform: uppercase;
     text-align: center;
     display: block;
-    margin-bottom: -15px; /* Margen negativo para acercar a la imagen */
+    margin-bottom: -15px !important; /* Margen negativo para acercar a la imagen */
     line-height: 1.1;
 }
 
@@ -45,7 +55,7 @@ st.markdown("""
     object-fit: cover !important;
 }
 
-/* Espaciado entre elementos internos de Streamlit */
+/* Espaciado interno general de Streamlit */
 [data-testid="stVerticalBlock"] > div {
     gap: 0.5rem !important;
 }
@@ -55,18 +65,20 @@ st.markdown("""
     font-weight: 600;
     font-size: 1.3rem;
     color: #333;
-    text-align: left;
+    display: flex;
+    align-items: center;
 }
 
-/* BOTÓN COMPRAR */
+/* BOTÓN COMPRAR ESTILO OVALADO */
 .stButton > button {
     background: transparent !important;
     color: #E91E63 !important;
     border: 2px solid #E91E63 !important;
     border-radius: 50px !important;
-    padding: 5px 20px !important;
+    padding: 5px 25px !important;
     font-weight: 700 !important;
     font-size: 0.85rem !important;
+    text-transform: uppercase;
     width: 100% !important;
     transition: all 0.3s ease !important;
 }
@@ -76,6 +88,7 @@ st.markdown("""
     color: white !important;
 }
 
+/* Ocultar elementos Streamlit */
 header, footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
@@ -116,6 +129,7 @@ try:
     main_cols = st.columns(3)
     for index, row in df.iterrows():
         with main_cols[index % 3]:
+            # El contenedor 'border=True' crea la tarjeta fucsia que ahora sí se estiliza
             with st.container(border=True):
                 # 1. NOMBRE (CENTRADO Y MÁS GRANDE)
                 st.markdown(f'<span class="product-title">{row["Nombre"]}</span>', unsafe_allow_html=True)
