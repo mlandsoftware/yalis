@@ -82,6 +82,21 @@ div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
     color: white !important;
 }
 
+/* ESTILO DEL BUSCADOR */
+div[data-testid="stTextInput"] input {
+    border: 2px solid #E91E63 !important;
+    border-radius: 50px !important;
+    padding: 10px 20px !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+/* ESTILO SELECTOR CANTIDAD */
+div[data-testid="stNumberInput"] input {
+    border: 2px solid #E91E63 !important;
+    border-radius: 10px !important;
+    text-align: center !important;
+}
+
 header, footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
@@ -106,9 +121,22 @@ def comprar_producto(row):
     col_img, col_det = st.columns([1.2, 1])
     
     with col_img:
-        data = get_image_from_drive(row["Imagen 1 link de la primera imagen"])
-        if data:
-            st.image(data, use_container_width=True)
+        # 6. GALERÍA DE IMÁGENES (Imagen 1, 2 y 3 si existen)
+        imagenes = []
+        for col_img_name in ["Imagen 1 link de la primera imagen", "Imagen 2 link de la segunda imagen", "Imagen 3 link de la tercera imagen"]:
+            if col_img_name in row.index and pd.notna(row[col_img_name]):
+                img_data = get_image_from_drive(row[col_img_name])
+                if img_data:
+                    imagenes.append(img_data)
+        
+        if imagenes:
+            if len(imagenes) == 1:
+                st.image(imagenes[0], use_container_width=True)
+            else:
+                # Miniaturas clickeables o grid de imágenes
+                st.image(imagenes, use_container_width=True)
+        else:
+            st.info("Sin imagen disponible")
             
     with col_det:
         # PRECIO Y OTROS TEXTOS EN NEGRO
@@ -118,7 +146,10 @@ def comprar_producto(row):
         tallas = str(row["Tallas"]).split(',')
         talla_sel = st.selectbox("Selecciona tu talla:", tallas)
         
-        mensaje = f"Hola YALIS, deseo comprar: {row['Nombre']} en talla {talla_sel}"
+        # 8. SELECTOR DE CANTIDAD
+        cantidad = st.number_input("Cantidad:", min_value=1, max_value=5, value=1, step=1)
+        
+        mensaje = f"Hola YALIS, deseo comprar: {row['Nombre']} (x{cantidad}) en talla {talla_sel}"
         wa_url = f"https://wa.me/{WHATSAPP_NUMBER}?text={urllib.parse.quote(mensaje)}"
         
         st.markdown(f'''
@@ -131,7 +162,7 @@ def comprar_producto(row):
                     border-radius: 50px; 
                     font-weight: 800; 
                     font-family: Montserrat;
-                    margin-top: 0px;
+                    margin-top: 10px;
                     border: 1px solid #128C7E;">
                     WHATSAPP
                 </div>
@@ -139,12 +170,29 @@ def comprar_producto(row):
         ''', unsafe_allow_html=True)
 
 # --- CABECERA ---
-st.markdown('<h1 style="text-align:center; color:#E91E63; font-weight:800; margin-bottom:40px;">YALIS SHOES</h1>', unsafe_allow_html=True)
+st.markdown('<h1 style="text-align:center; color:#E91E63; font-weight:800; margin-bottom:10px;">YALIS SHOES</h1>', unsafe_allow_html=True)
+
+# 4. BUSCADOR DE PRODUCTOS
+st.markdown('<div style="max-width:500px; margin:0 auto 30px auto;">', unsafe_allow_html=True)
+busqueda = st.text_input("", placeholder="🔍 Buscar modelo...", label_visibility="collapsed")
+st.markdown('</div>', unsafe_allow_html=True)
 
 # --- CATÁLOGO ---
 try:
     conn = st.connection("gsheets", type=GSheetsConnection)
     df = conn.read(ttl="5m").dropna(subset=['Nombre'])
+
+    # Filtrar por búsqueda
+    if busqueda:
+        df = df[df['Nombre'].str.contains(busqueda, case=False, na=False)]
+        if df.empty:
+            st.info("No se encontraron productos con ese nombre.")
+    
+    # Verificar columnas de imágenes adicionales
+    columnas_imagenes = ["Imagen 1 link de la primera imagen", "Imagen 2 link de la segunda imagen", "Imagen 3 link de la tercera imagen"]
+    for col in columnas_imagenes[1:]:
+        if col not in df.columns:
+            df[col] = None
 
     main_cols = st.columns(3)
     for index, row in df.iterrows():
@@ -168,3 +216,17 @@ try:
 
 except Exception as e:
     st.error("Conectando con el inventario...")
+
+# 5. FOOTER CON INFO DE CONTACTO
+st.markdown("""
+<div style="text-align:center; margin-top:60px; padding:40px 20px; border-top:2px solid #E91E63;">
+    <h3 style="color:#E91E63; font-family:Montserrat; font-weight:800; margin-bottom:20px;">YALIS SHOES</h3>
+    <p style="color:#333; font-family:Montserrat; font-size:1rem; line-height:1.8;">
+        📍 Quito, Ecuador &nbsp;|&nbsp; 📱 +593 97 886 8363<br>
+        🚚 Envíos a todo el país &nbsp;|&nbsp; 💳 Pagos contra entrega
+    </p>
+    <p style="color:#888; font-family:Montserrat; font-size:0.85rem; margin-top:20px;">
+        © 2026 YALIS SHOES - Calzado para dama
+    </p>
+</div>
+""", unsafe_allow_html=True)
