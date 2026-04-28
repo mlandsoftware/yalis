@@ -10,77 +10,75 @@ st.set_page_config(page_title="YALIS | Luxury Footwear", layout="wide")
 
 WHATSAPP_NUMBER = "593978868363"
 
-# --- CSS REFINADO: FORZANDO BORDE Y EFECTO HOVER ---
+# --- CSS REFINADO: TARJETAS Y MODAL ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
 
-.stApp { background-color: #FFFFFF; font-family: 'Montserrat', sans-serif; }
+/* Aplicar Montserrat a toda la app, incluyendo diálogos */
+.stApp, [data-testid="stDialog"] { 
+    background-color: #FFFFFF; 
+    font-family: 'Montserrat', sans-serif !important; 
+}
 
-/* ========== TARJETA ROBUSTA CON BORDE FUCSIA Y EFECTO ========== */
-/* Usamos un selector doble para garantizar que sobreescriba los estilos nativos */
+/* ========== ESTILO DEL MODAL (VENTANA EMERGENTE) ========== */
+div[data-testid="stDialog"] {
+    background-color: white !important;
+    border-radius: 20px !important;
+}
+
+div[data-testid="stDialog"] h2 {
+    font-family: 'Montserrat', sans-serif !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+}
+
+/* ========== TARJETA DEL CATÁLOGO ========== */
 div[data-testid="stVerticalBlockBorderWrapper"] > div {
-    border: 2px solid #E91E63 !important; /* Borde fucsia Mary Luna */
+    border: 2px solid #E91E63 !important;
     border-radius: 25px !important;
     padding: 20px !important;
     background-color: white !important;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.03) !important;
-    transition: all 0.3s ease-in-out !important; /* Transición suave */
+    transition: all 0.3s ease-in-out !important;
 }
 
-/* EFECTO HOVER (Al pasar el mouse) */
 div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
-    transform: translateY(-5px) !important; /* Eleva la tarjeta */
-    border-color: #ff007f !important; /* Brillo fucsia más intenso */
-    box-shadow: 0 12px 30px rgba(233, 30, 99, 0.2) !important; /* Sombra más profunda */
+    transform: translateY(-5px) !important;
+    box-shadow: 0 12px 30px rgba(233, 30, 99, 0.2) !important;
 }
 
-/* ========== TEXTOS Y ESPACIOS ========== */
-/* 1. NOMBRE: Más grande y más cerca de la imagen */
 .product-title {
     color: #E91E63;
     font-weight: 800;
-    font-size: 1.4rem; /* Grande */
+    font-size: 1.4rem;
     text-transform: uppercase;
     text-align: center;
     display: block;
-    margin-bottom: -15px !important; /* Margen negativo para acercar a la imagen */
+    margin-bottom: -15px !important;
     line-height: 1.1;
 }
 
-/* 2. IMAGEN: Proporción Cuadrada */
 [data-testid="stImage"] img {
     border-radius: 15px !important;
     aspect-ratio: 1 / 1 !important;
     object-fit: cover !important;
 }
 
-/* Espaciado interno general de Streamlit */
-[data-testid="stVerticalBlock"] > div {
-    gap: 0.5rem !important;
-}
-
-/* 3. FILA DE PRECIO Y BOTÓN */
 .price-container {
     font-weight: 600;
     font-size: 1.3rem;
     color: #333;
-    display: flex;
-    align-items: center;
 }
 
-/* BOTÓN COMPRAR ESTILO OVALADO */
+/* BOTÓN COMPRAR EN TARJETA */
 .stButton > button {
     background: transparent !important;
     color: #E91E63 !important;
     border: 2px solid #E91E63 !important;
     border-radius: 50px !important;
-    padding: 5px 25px !important;
     font-weight: 700 !important;
-    font-size: 0.85rem !important;
     text-transform: uppercase;
     width: 100% !important;
-    transition: all 0.3s ease !important;
 }
 
 .stButton > button:hover {
@@ -88,7 +86,6 @@ div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
     color: white !important;
 }
 
-/* Ocultar elementos Streamlit */
 header, footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
@@ -104,22 +101,54 @@ def get_image_from_drive(url):
         return BytesIO(response.content) if response.status_code == 200 else None
     except: return None
 
-@st.dialog("DETALLES")
+# --- VENTANA EMERGENTE (MODAL) ---
+@st.dialog("DETALLES DEL PRODUCTO")
 def comprar_producto(row):
-    st.markdown(f"<h2 style='color:#E91E63; text-align:center;'>{row['Nombre']}</h2>", unsafe_allow_html=True)
+    # Fondo blanco y tipografía forzada
+    st.markdown(f"""
+        <h2 style='color:#E91E63; text-align:center; font-family:Montserrat;'>{row['Nombre']}</h2>
+        <hr style="border: 0.5px solid #f0f0f0;">
+    """, unsafe_allow_html=True)
+    
     col_img, col_det = st.columns([1.2, 1])
+    
     with col_img:
         data = get_image_from_drive(row["Imagen 1 link de la primera imagen"])
-        if data: st.image(data, use_container_width=True)
+        if data: 
+            st.image(data, use_container_width=True)
+    
     with col_det:
-        st.markdown(f"## ${row['Precio']}")
+        st.markdown(f"<h3 style='font-family:Montserrat;'>Precio: ${row['Precio']}</h3>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-family:Montserrat; color:#666;'>Colección: {row['Coleccion']}</p>", unsafe_allow_html=True)
+        
         tallas = str(row["Tallas"]).split(',')
-        st.selectbox("Talla:", tallas)
-        wa_url = f"https://wa.me/{WHATSAPP_NUMBER}?text=Comprar: {row['Nombre']}"
-        st.markdown(f'<a href="{wa_url}" target="_blank" style="text-decoration:none;"><div style="background:#25D366; color:white; text-align:center; padding:12px; border-radius:50px; font-weight:bold; margin-top:20px;">WHATSAPP</div></a>', unsafe_allow_html=True)
+        talla_sel = st.selectbox("Selecciona tu talla:", tallas)
+        
+        # Botón de WhatsApp con texto negro y fondo sutil
+        mensaje = f"Hola YALIS, deseo comprar: {row['Nombre']} en Talla: {talla_sel}"
+        wa_url = f"https://wa.me/{WHATSAPP_NUMBER}?text={urllib.parse.quote(mensaje)}"
+        
+        st.markdown(f"""
+            <a href="{wa_url}" target="_blank" style="text-decoration:none;">
+                <div style="
+                    background-color: #f8f9fa; 
+                    color: black; 
+                    text-align: center; 
+                    padding: 15px; 
+                    border-radius: 50px; 
+                    font-weight: 800; 
+                    border: 2px solid #25D366;
+                    margin-top: 20px;
+                    font-family: 'Montserrat', sans-serif;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;">
+                    Pedir por WhatsApp
+                </div>
+            </a>
+        """, unsafe_allow_html=True)
 
 # --- CABECERA ---
-st.markdown('<h1 style="text-align:center; color:#E91E63; font-weight:800; margin-bottom:40px;">YALIS LUJO</h1>', unsafe_allow_html=True)
+st.markdown('<h1 style="text-align:center; color:#E91E63; font-weight:800; margin-bottom:40px; font-family:Montserrat;">YALIS LUJO</h1>', unsafe_allow_html=True)
 
 # --- CATÁLOGO ---
 try:
@@ -129,17 +158,13 @@ try:
     main_cols = st.columns(3)
     for index, row in df.iterrows():
         with main_cols[index % 3]:
-            # El contenedor 'border=True' crea la tarjeta fucsia que ahora sí se estiliza
             with st.container(border=True):
-                # 1. NOMBRE (CENTRADO Y MÁS GRANDE)
                 st.markdown(f'<span class="product-title">{row["Nombre"]}</span>', unsafe_allow_html=True)
                 
-                # 2. FOTO (MÁS PEGADA AL NOMBRE)
                 portada = get_image_from_drive(row["Imagen 1 link de la primera imagen"])
                 if portada:
                     st.image(portada, use_container_width=True)
                 
-                # 3. PRECIO Y BOTÓN
                 c_pre, c_btn = st.columns([1, 1.2])
                 with c_pre:
                     st.markdown(f'<div class="price-container">${row["Precio"]}</div>', unsafe_allow_html=True)
@@ -148,4 +173,4 @@ try:
                         comprar_producto(row)
 
 except Exception as e:
-    st.error("Error al cargar datos.")
+    st.error("Conectando con el inventario...")
