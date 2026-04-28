@@ -34,20 +34,24 @@ div[data-testid="stDialog"] label {
     color: #000000 !important;
 }
 
-div[data-testid="stVerticalBlockBorderWrapper"] > div {
+/* TARJETA DEL CATÁLOGO - BORDE FUCSIA CORREGIDO */
+div[data-testid="stVerticalBlockBorderWrapper"] {
     border: 2px solid #E91E63 !important;
     border-radius: 25px !important;
-    padding: 20px !important;
     background-color: white !important;
     transition: all 0.3s ease-in-out !important;
-    height: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
 }
 
-div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
+div[data-testid="stVerticalBlockBorderWrapper"]:hover {
     transform: translateY(-5px) !important;
     box-shadow: 0 12px 30px rgba(233, 30, 99, 0.2) !important;
+}
+
+/* Contenedor interno de la tarjeta */
+div[data-testid="stVerticalBlockBorderWrapper"] > div {
+    padding: 20px !important;
+    background-color: white !important;
+    border-radius: 23px !important;
 }
 
 .tarjeta-imagen {
@@ -90,11 +94,36 @@ div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
     color: white !important;
 }
 
-div[data-testid="stTextInput"] input {
+/* BARRA DE BÚSQUEDA - ESTILO CORREGIDO */
+div[data-testid="stTextInput"] {
+    max-width: 500px;
+    margin: 0 auto 30px auto;
+}
+
+div[data-testid="stTextInput"] > div {
     border: 2px solid #E91E63 !important;
     border-radius: 50px !important;
-    padding: 10px 20px !important;
+    background-color: #FFFFFF !important;
+}
+
+div[data-testid="stTextInput"] input {
+    background-color: #FFFFFF !important;
+    color: #333333 !important;
+    border: none !important;
+    border-radius: 50px !important;
+    padding: 12px 24px !important;
     font-family: 'Montserrat', sans-serif !important;
+    font-size: 1rem !important;
+}
+
+div[data-testid="stTextInput"] input::placeholder {
+    color: #999999 !important;
+}
+
+/* Quitar fondo oscuro del input */
+div[data-testid="stTextInput"] > div > div {
+    background-color: #FFFFFF !important;
+    border-radius: 50px !important;
 }
 
 div[data-testid="stNumberInput"] input {
@@ -171,11 +200,9 @@ def comprar_producto(row):
         
         cantidad = st.number_input("Cantidad:", min_value=1, max_value=5, value=1, step=1)
         
-        # Calcular total
         precio = float(row['Precio']) if pd.notna(row['Precio']) else 0
         total = precio * cantidad
         
-        # Mensaje formateado exactamente como lo pidió el usuario
         mensaje = f"""Hola Yalis, deseo realizar un pedido:
 
 *Producto:* {row['Nombre']}
@@ -207,10 +234,8 @@ Código: {row['cod.']}"""
 # --- CABECERA ---
 st.markdown('<h1 style="text-align:center; color:#E91E63; font-weight:800; margin-bottom:10px;">YALIS SHOES</h1>', unsafe_allow_html=True)
 
-# BUSCADOR DE PRODUCTOS
-st.markdown('<div style="max-width:500px; margin:0 auto 30px auto;">', unsafe_allow_html=True)
-busqueda = st.text_input("", placeholder="🔍 Buscar modelo...", label_visibility="collapsed")
-st.markdown('</div>', unsafe_allow_html=True)
+# BUSCADOR DE PRODUCTOS - SIN HTML EXTERNO
+busqueda = st.text_input("Buscar", placeholder="🔍 Buscar modelo...", label_visibility="collapsed")
 
 # --- CATÁLOGO ---
 try:
