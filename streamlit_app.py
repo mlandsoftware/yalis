@@ -103,7 +103,6 @@ div[data-testid="stNumberInput"] input {
     text-align: center !important;
 }
 
-/* Botones de navegación del slider - estilo fucsia */
 div[data-testid="stButton"] > button[kind="secondary"] {
     background: #E91E63 !important;
     color: white !important;
@@ -120,7 +119,6 @@ div[data-testid="stButton"] > button[kind="secondary"]:hover {
     color: white !important;
 }
 
-/* Miniaturas del slider */
 .thumb-container {
     display: flex;
     gap: 8px;
@@ -133,14 +131,9 @@ div[data-testid="stButton"] > button[kind="secondary"]:hover {
     height: 55px;
     object-fit: cover;
     border-radius: 8px;
-    cursor: pointer;
     border: 2px solid transparent;
     opacity: 0.5;
     transition: all 0.2s;
-}
-
-.thumb-img:hover {
-    opacity: 0.8;
 }
 
 .thumb-img.active {
@@ -164,7 +157,6 @@ def get_image_from_drive(url):
     except: return None
 
 def img_to_base64(img_bytesio):
-    """Convierte BytesIO a base64 string"""
     if img_bytesio is None:
         return None
     img_bytesio.seek(0)
@@ -173,10 +165,8 @@ def img_to_base64(img_bytesio):
 # --- VENTANA EMERGENTE (MODAL) CON SLIDER NATIVO ---
 @st.dialog("Detalle del producto")
 def comprar_producto(row):
-    # NOMBRE EN COLOR FUCSIA
     st.markdown(f"<h2 style='color:#E91E63; font-family:Montserrat; font-weight:800; text-align:center; margin-bottom:20px;'>{row['Nombre']}</h2>", unsafe_allow_html=True)
     
-    # Recolectar imágenes disponibles
     imagenes_bytes = []
     nombres_cols = ["Imagen 1 link de la primera imagen", "Imagen 2 link de la segunda imagen", "Imagen 3 link de la tercera imagen"]
     for col_img_name in nombres_cols:
@@ -189,17 +179,14 @@ def comprar_producto(row):
     
     with col_img:
         if len(imagenes_bytes) > 1:
-            # SLIDER CON SESSION STATE
             slider_key = f"slider_idx_{row['cod.']}"
             if slider_key not in st.session_state:
                 st.session_state[slider_key] = 0
             
             idx_actual = st.session_state[slider_key]
             
-            # IMAGEN PRINCIPAL
             st.image(imagenes_bytes[idx_actual], use_container_width=True)
             
-            # CONTROLES DE NAVEGACIÓN
             nav_col1, nav_col2, nav_col3 = st.columns([1, 2, 1])
             
             with nav_col1:
@@ -221,18 +208,14 @@ def comprar_producto(row):
                     st.session_state[slider_key] = nuevo_idx
                     st.rerun()
             
-            # MINIATURAS COMO HTML (más confiable que botones sobre imágenes)
             thumbs_html = '<div class="thumb-container">'
             for i, img in enumerate(imagenes_bytes):
                 img_b64 = img_to_base64(img)
                 active_class = "active" if i == idx_actual else ""
-                # Usar un botón de Streamlit invisible encima no funciona bien, 
-                # así que usamos HTML con JavaScript para cambiar de imagen
                 thumbs_html += f'<img src="data:image/jpeg;base64,{img_b64}" class="thumb-img {active_class}">'
             thumbs_html += '</div>'
             st.markdown(thumbs_html, unsafe_allow_html=True)
             
-            # Botones debajo de las miniaturas para seleccionar imagen
             thumb_cols = st.columns(len(imagenes_bytes))
             for i, tcol in enumerate(thumb_cols):
                 with tcol:
@@ -246,7 +229,6 @@ def comprar_producto(row):
             st.info("Sin imagen disponible")
             
     with col_det:
-        # PRECIO Y OTROS TEXTOS EN NEGRO
         st.markdown(f"<h3 style='color:#000000; font-family:Montserrat; font-size:1.8rem;'>${row['Precio']}</h3>", unsafe_allow_html=True)
         st.markdown(f"<p style='color:#000000; font-size:1.1rem;'><b>Colección:</b> {row['Coleccion']}</p>", unsafe_allow_html=True)
         
@@ -257,7 +239,6 @@ def comprar_producto(row):
         
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # SELECTOR DE CANTIDAD
         cantidad = st.number_input("Cantidad:", min_value=1, max_value=5, value=1, step=1)
         
         st.markdown("<br>", unsafe_allow_html=True)
@@ -287,4 +268,56 @@ def comprar_producto(row):
 st.markdown('<h1 style="text-align:center; color:#E91E63; font-weight:800; margin-bottom:10px;">YALIS SHOES</h1>', unsafe_allow_html=True)
 
 # BUSCADOR DE PRODUCTOS
-st.markdown('<div style="max-width:500px; margin:0 auto 30px
+busqueda = st.text_input("Buscar", placeholder="Buscar modelo...", label_visibility="collapsed")
+
+# --- CATÁLOGO ---
+try:
+    conn = st.connection("gsheets", type=GSheetsConnection)
+    df = conn.read(ttl="5m").dropna(subset=['Nombre'])
+
+    if busqueda:
+        df = df[df['Nombre'].str.contains(busqueda, case=False, na=False)]
+        if df.empty:
+            st.info("No se encontraron productos con ese nombre.")
+    
+    columnas_imagenes = ["Imagen 1 link de la primera imagen", "Imagen 2 link de la segunda imagen", "Imagen 3 link de la tercera imagen"]
+    for col in columnas_imagenes[1:]:
+        if col not in df.columns:
+            df[col] = None
+
+    main_cols = st.columns(3)
+    for index, row in df.iterrows():
+        with main_cols[index % 3]:
+            with st.container(border=True):
+                st.markdown(f'<span class="product-title">{row["Nombre"]}</span>', unsafe_allow_html=True)
+                
+                portada = get_image_from_drive(row["Imagen 1 link de la primera imagen"])
+                if portada:
+                    img_b64 = base64.b64encode(portada.getvalue()).decode()
+                    st.markdown(f'<img src="data:image/jpeg;base64,{img_b64}" class="tarjeta-imagen">', unsafe_allow_html=True)
+                
+                c_pre, c_btn = st.columns([1, 1.2])
+                with c_pre:
+                    st.markdown(f'<div class="product-price-cat">${row["Precio"]}</div>', unsafe_allow_html=True)
+                with c_btn:
+                    if st.button("COMPRAR", key=f"btn_{row['cod.']}"):
+                        slider_key = f"slider_idx_{row['cod.']}"
+                        st.session_state[slider_key] = 0
+                        comprar_producto(row)
+
+except Exception as e:
+    st.error("Conectando con el inventario...")
+
+# FOOTER
+st.markdown("""
+<div style="text-align:center; margin-top:60px; padding:40px 20px; border-top:2px solid #E91E63;">
+    <h3 style="color:#E91E63; font-family:Montserrat; font-weight:800; margin-bottom:20px;">YALIS SHOES</h3>
+    <p style="color:#333; font-family:Montserrat; font-size:1rem; line-height:1.8;">
+        📍 Quito, Ecuador &nbsp;|&nbsp; 📱 +593 97 886 8363<br>
+        🚚 Envíos a todo el país &nbsp;|&nbsp; 💳 Pagos contra entrega
+    </p>
+    <p style="color:#888; font-family:Montserrat; font-size:0.85rem; margin-top:20px;">
+        © 2026 YALIS SHOES - Calzado para dama
+    </p>
+</div>
+""", unsafe_allow_html=True)
