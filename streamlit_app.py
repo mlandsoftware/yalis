@@ -5,9 +5,10 @@ import urllib.parse
 import requests
 from io import BytesIO
 import base64
+import re
 
 # --- CONFIGURACIÓN DE PÁGINA ---
-st.set_page_config(page_title="YALIS SHOES | Calzado para dama", layout="wide")
+st.set_page_config(page_title="YALIS SHOES| Calzado para dama", layout="wide")
 
 WHATSAPP_NUMBER = "593978868363"
 
@@ -34,8 +35,7 @@ div[data-testid="stDialog"] label {
     color: #000000 !important;
 }
 
-/* TARJETA DEL CATÁLOGO - BORDE FUCSIA EN EL CONTENEDOR CORRECTO */
-/* Selector exacto según tu inspección: div.stVerticalBlock.st-emotion-cache-... */
+/* TARJETA DEL CATÁLOGO - BORDE FUCSIA */
 div[data-testid="stVerticalBlockBorderWrapper"] > div[class*="st-emotion-cache"] {
     border: 2px solid #E91E63 !important;
     border-radius: 25px !important;
@@ -89,7 +89,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] > div[class*="st-emotion-cache"]
     color: white !important;
 }
 
-/* BARRA DE BÚSQUEDA - ESTILO LIMPIO */
+/* BARRA DE BÚSQUEDA */
 div[data-testid="stTextInput"] {
     max-width: 500px;
     margin: 0 auto 30px auto;
@@ -148,6 +148,47 @@ header, footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
+# --- FUNCIÓN PARA LIMPIAR PRECIO ---
+def limpiar_precio(valor):
+    """
+    Convierte precios de formato texto ($112,10 o $100) a número float.
+    Soporta coma o punto como separador decimal.
+    """
+    if pd.isna(valor):
+        return 0.0
+    
+    # Convertir a string si no lo es
+    precio_str = str(valor)
+    
+    # Eliminar símbolo $, espacios y caracteres no numéricos excepto , y .
+    precio_str = re.sub(r'[^\d,\.]', '', precio_str)
+    
+    # Si hay coma y punto, determinar cuál es el separador decimal
+    if ',' in precio_str and '.' in precio_str:
+        # Formato: 1.234,56 (europeo) o 1,234.56 (americano)
+        # Asumimos que el último es el decimal
+        last_comma = precio_str.rfind(',')
+        last_point = precio_str.rfind('.')
+        if last_comma > last_point:
+            # 1.234,56 → eliminar puntos, cambiar coma por punto
+            precio_str = precio_str.replace('.', '').replace(',', '.')
+        else:
+            # 1,234.56 → eliminar comas
+            precio_str = precio_str.replace(',', '')
+    elif ',' in precio_str:
+        # Solo coma: puede ser decimal (112,10) o miles (1.000 no aplica aquí)
+        # Asumimos decimal si hay 1 o 2 dígitos después de la coma
+        partes = precio_str.split(',')
+        if len(partes) == 2 and len(partes[1]) <= 2:
+            precio_str = precio_str.replace(',', '.')
+        else:
+            precio_str = precio_str.replace(',', '')
+    
+    try:
+        return float(precio_str)
+    except ValueError:
+        return 0.0
+
 # --- LÓGICA DE IMÁGENES ---
 @st.cache_data(show_spinner=False)
 def get_image_from_drive(url):
@@ -186,6 +227,10 @@ def comprar_producto(row):
             st.info("Sin imagen disponible")
             
     with col_det:
+        # Usar función limpiar_precio para manejar $112,10 o $100
+        precio = limpiar_precio(row['Precio'])
+        total = precio * cantidad if 'cantidad' in locals() else precio
+        
         st.markdown(f"<h3 style='color:#000000; font-family:Montserrat;'>${row['Precio']}</h3>", unsafe_allow_html=True)
         st.markdown(f"<p style='color:#000000;'><b>Colección:</b> {row['Coleccion']}</p>", unsafe_allow_html=True)
         
@@ -194,7 +239,7 @@ def comprar_producto(row):
         
         cantidad = st.number_input("Cantidad:", min_value=1, max_value=5, value=1, step=1)
         
-        precio = float(row['Precio']) if pd.notna(row['Precio']) else 0
+        # Recalcular total después de definir cantidad
         total = precio * cantidad
         
         mensaje = f"""Hola Yalis, deseo realizar un pedido:
@@ -226,7 +271,7 @@ Código: {row['cod.']}"""
         ''', unsafe_allow_html=True)
 
 # --- CABECERA ---
-st.markdown('<h1 style="text-align:center; color:#E91E63; font-weight:800; margin-bottom:10px;"> YALIS SHOES </h1>', unsafe_allow_html=True)
+st.markdown('<h1 style="text-align:center; color:#E91E63; font-weight:800; margin-bottom:10px;">YALIS SHOES</h1>', unsafe_allow_html=True)
 
 # BUSCADOR DE PRODUCTOS
 busqueda = st.text_input("Buscar", placeholder="🔍 Buscar modelo...", label_visibility="collapsed")
@@ -272,11 +317,11 @@ st.markdown("""
 <div style="text-align:center; margin-top:60px; padding:40px 20px; border-top:2px solid #E91E63;">
     <h3 style="color:#E91E63; font-family:Montserrat; font-weight:800; margin-bottom:20px;">YALIS SHOES</h3>
     <p style="color:#333; font-family:Montserrat; font-size:1rem; line-height:1.8;">
-        📍 Guayaquil, Ecuador &nbsp;|&nbsp; 📱 +593 97 886 8363<br>
-        🚚 Envíos a todo el país &nbsp;|&nbsp; 
+        📍 Quito, Ecuador &nbsp;|&nbsp; 📱 +593 97 886 8363<br>
+        🚚 Envíos a todo el país &nbsp;|&nbsp; 💳 Pagos contra entrega
     </p>
     <p style="color:#888; font-family:Montserrat; font-size:0.85rem; margin-top:20px;">
-        © 2024 YALIS SHOES - Calzado para dama
+        © 2026 YALIS SHOES - Calzado para dama
     </p>
 </div>
 """, unsafe_allow_html=True)
