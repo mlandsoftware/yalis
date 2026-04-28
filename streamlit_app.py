@@ -226,7 +226,7 @@ Código: {row['cod.']}"""
         ''', unsafe_allow_html=True)
 
 # --- CABECERA ---
-st.markdown('<h1 style="text-align:center; color:#E91E63; font-weight:800; margin-bottom:10px;">YALIS SHOES</h1>', unsafe_allow_html=True)
+st.markdown('<h1 style="text-align:center; color:#E91E63; font-weight:800; margin-bottom:10px;"> YALIS SHOES </h1>', unsafe_allow_html=True)
 
 # BUSCADOR DE PRODUCTOS
 busqueda = st.text_input("Buscar", placeholder="🔍 Buscar modelo...", label_visibility="collapsed")
