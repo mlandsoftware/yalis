@@ -7,7 +7,7 @@ from io import BytesIO
 import base64
 
 # --- CONFIGURACIÓN DE PÁGINA ---
-st.set_page_config(page_title="YALIS SHOES| Calzado para dama", layout="wide")
+st.set_page_config(page_title="YALIS SHOES | Calzado para dama", layout="wide")
 
 WHATSAPP_NUMBER = "593978868363"
 
