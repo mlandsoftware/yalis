@@ -21,34 +21,33 @@ st.markdown("""
     font-family: 'Montserrat', sans-serif !important; 
 }
 
-/* FUERZA LA MISMA ALTURA EN LAS TARJETAS */
-[data-testid="stVerticalBlock"] > div:has(div.product-card) {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
-/* TARJETA DEL CATÁLOGO (SELECTOR MÁS FUERTE) */
-div.product-card {
+/* ESTILO DE LAS TARJETAS (BORDER Y HOVER) */
+/* Seleccionamos el div que contiene el borde del container de Streamlit */
+[data-testid="stVerticalBlockBorderWrapper"] {
     border: 2px solid #E91E63 !important;
     border-radius: 25px !important;
-    padding: 20px !important;
-    background-color: white !important;
+    padding: 0px !important;
     transition: all 0.3s ease-in-out !important;
-    height: 100% !important;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    margin-bottom: 20px;
+    background-color: white !important;
+    margin-bottom: 1rem !important;
 }
 
-div.product-card:hover {
-    transform: translateY(-8px) !important;
+/* Efecto Hover en la tarjeta */
+[data-testid="stVerticalBlockBorderWrapper"]:hover {
+    transform: translateY(-5px) !important;
     box-shadow: 0 12px 30px rgba(233, 30, 99, 0.3) !important;
     border-color: #C2185B !important;
 }
 
-/* TÍTULOS */
+/* Forzar altura mínima para que todas estén alineadas */
+[data-testid="stVerticalBlockBorderWrapper"] > div {
+    min-height: 450px !important; 
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* TÍTULOS EN EL CATÁLOGO */
 .product-title {
     color: #E91E63;
     font-weight: 800;
@@ -56,17 +55,18 @@ div.product-card:hover {
     text-transform: uppercase;
     text-align: center;
     display: block;
-    min-height: 50px; /* Asegura espacio para nombres largos */
+    margin-bottom: 10px !important;
+    min-height: 50px; /* Alinea títulos de 1 o 2 líneas */
 }
 
 .product-price-cat {
-    font-weight: 700;
+    font-weight: 600;
     font-size: 1.4rem;
     color: #333;
-    text-align: left;
+    text-align: center;
 }
 
-/* BOTÓN COMPRAR */
+/* BOTÓN COMPRAR PERSONALIZADO */
 .stButton > button {
     background: transparent !important;
     color: #E91E63 !important;
@@ -83,19 +83,7 @@ div.product-card:hover {
     color: white !important;
 }
 
-/* MODAL / DIALOG */
-div[data-testid="stDialog"] div[role="dialog"] {
-    background-color: #FFFFFF !important;
-    border-radius: 20px !important;
-}
-
-div[data-testid="stDialog"] h2, 
-div[data-testid="stDialog"] h3, 
-div[data-testid="stDialog"] p, 
-div[data-testid="stDialog"] label {
-    color: #000000 !important;
-}
-
+/* Ocultar elementos innecesarios */
 header, footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
@@ -105,7 +93,10 @@ header, footer {visibility: hidden;}
 def get_image_from_drive(url):
     if not isinstance(url, str) or "drive.google.com" not in url: return None
     try:
-        file_id = url.split('/d/')[1].split('/')[0] if "file/d/" in url else url.split('id=')[1].split('&')[0]
+        if "file/d/" in url:
+            file_id = url.split('/d/')[1].split('/')[0]
+        else:
+            file_id = url.split('id=')[1].split('&')[0]
         direct_url = f"https://drive.google.com/uc?export=download&id={file_id}"
         response = requests.get(direct_url, timeout=10)
         return BytesIO(response.content) if response.status_code == 200 else None
@@ -145,48 +136,43 @@ def comprar_producto(row):
                     font-family: Montserrat;
                     margin-top: 10px;
                     border: none;">
-                    PEDIR POR WHATSAPP
+                    WHATSAPP
                 </div>
             </a>
         ''', unsafe_allow_html=True)
 
 # --- CABECERA ---
-st.markdown('<h1 style="text-align:center; color:#E91E63; font-weight:800; margin-bottom:40px;">YALIS SHOES</h1>', unsafe_allow_html=True)
+st.markdown('<h1 style="text-align:center; color:#E91E63; font-weight:800; margin-top: -50px; margin-bottom:40px;">YALIS SHOES</h1>', unsafe_allow_html=True)
 
 # --- CATÁLOGO ---
 try:
     conn = st.connection("gsheets", type=GSheetsConnection)
     df = conn.read(ttl="5m").dropna(subset=['Nombre'])
 
-    # Creamos las filas del catálogo
-    for i in range(0, len(df), 3):
-        cols = st.columns(3)
-        for j in range(3):
-            if i + j < len(df):
-                row = df.iloc[i + j]
-                with cols[j]:
-                    # Usamos un div con clase personalizada para aplicar el estilo
-                    st.markdown('<div class="product-card">', unsafe_allow_html=True)
-                    
-                    # 1. NOMBRE
-                    st.markdown(f'<span class="product-title">{row["Nombre"]}</span>', unsafe_allow_html=True)
-                    
-                    # 2. FOTO
-                    portada = get_image_from_drive(row["Imagen 1 link de la primera imagen"])
-                    if portada:
-                        st.image(portada, use_container_width=True)
-                    else:
-                        st.write("Cargando imagen...")
-                    
-                    # 3. PRECIO Y BOTÓN
-                    c_pre, c_btn = st.columns([1, 1.2])
-                    with c_pre:
-                        st.markdown(f'<div class="product-price-cat">${row["Precio"]}</div>', unsafe_allow_html=True)
-                    with c_btn:
-                        if st.button("COMPRAR", key=f"btn_{row.get('cod.', i+j)}"):
-                            comprar_producto(row)
-                    
-                    st.markdown('</div>', unsafe_allow_html=True)
+    # Creamos las columnas para el grid
+    main_cols = st.columns(3)
+    
+    for index, row in df.iterrows():
+        col_index = index % 3
+        with main_cols[col_index]:
+            # El borde y hover se aplican a este st.container
+            with st.container(border=True):
+                # 1. NOMBRE
+                st.markdown(f'<span class="product-title">{row["Nombre"]}</span>', unsafe_allow_html=True)
+                
+                # 2. FOTO
+                portada = get_image_from_drive(row["Imagen 1 link de la primera imagen"])
+                if portada:
+                    st.image(portada, use_container_width=True)
+                else:
+                    st.write("Imagen no disponible")
+                
+                # 3. PRECIO Y BOTÓN
+                # Usamos un espacio para empujar el precio y botón al final si es necesario
+                st.markdown(f'<div class="product-price-cat">${row["Precio"]}</div>', unsafe_allow_html=True)
+                
+                if st.button("COMPRAR", key=f"btn_{row['cod.']}"):
+                    comprar_producto(row)
 
 except Exception as e:
-    st.error(f"Error al cargar el inventario: {e}")
+    st.error(f"Error al cargar el catálogo: {e}")
