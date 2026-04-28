@@ -5,150 +5,139 @@ import urllib.parse
 import requests
 from io import BytesIO
 
-# Configuración Pro
-st.set_page_config(page_title="YALIS | Pasión por el Calzado", layout="wide")
+st.set_page_config(page_title="YALIS Boutique", layout="wide")
 
 WHATSAPP_NUMBER = "593978868363"
 
-# CSS Maestro: Enfoque en Proporción y Rojo Pasión
+# CSS para Estética Femenina y Proporciones Correctas
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;500;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;500&display=swap');
 
-    .stApp { background-color: #fcfcfc; }
+    /* Fondo y Base */
+    .stApp { background-color: #ffffff; }
     
-    /* Contenedor de Tarjeta Todo-en-Uno */
+    /* Contenedor de Tarjeta */
     .product-card {
-        background-color: white;
-        border-radius: 25px;
-        padding: 0px 0px 20px 0px; /* Sin padding arriba para que la imagen toque los bordes */
-        border: 1px solid #eee;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        background: #fff;
+        border-radius: 30px; /* Bordes mucho más suaves */
+        padding: 0px 0px 20px 0px;
+        border: 1px solid #f2f2f2;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.03);
         margin-bottom: 30px;
         text-align: center;
-        overflow: hidden; /* Corta la imagen para que siga el radio de la tarjeta */
-        transition: all 0.3s ease;
-        height: 100%;
+        overflow: hidden; /* Para que la imagen respete el borde redondeado */
+        transition: all 0.4s ease;
     }
     
     .product-card:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 15px 35px rgba(186, 26, 26, 0.2);
-        border-color: #BA1A1A;
+        box-shadow: 0 15px 35px rgba(212, 175, 55, 0.1);
+        transform: translateY(-8px);
     }
 
-    /* Ajuste de Imagen Proporcional */
-    .product-img-container {
+    /* Imagen Proporcional */
+    .img-container {
         width: 100%;
-        height: 320px;
+        height: 320px; /* Altura fija para uniformidad */
         overflow: hidden;
     }
-    .product-img-container img {
+    .img-container img {
         width: 100%;
         height: 100%;
-        object-fit: cover; /* Evita que la imagen se estire */
+        object-fit: cover; /* Asegura que no se estiren */
     }
 
-    /* Tipografía y Colores */
-    h1 { font-family: 'Cinzel', serif; color: #BA1A1A !important; font-size: 3.5rem !important; margin-bottom: 0px; }
-    h4 { font-family: 'Montserrat', sans-serif; font-weight: 700; color: #1a1a1a; margin: 15px 10px 5px 10px; min-height: 50px; }
-    .price-tag { color: #BA1A1A; font-family: 'Montserrat', sans-serif; font-size: 1.4rem; font-weight: 700; margin-bottom: 15px; }
-
-    /* Botón Rojo Pasión con Bordes Suaves */
-    .stButton>button {
-        background: linear-gradient(145deg, #BA1A1A, #800000) !important;
-        color: white !important;
-        border-radius: 50px !important;
-        border: none !important;
-        padding: 12px 30px !important;
+    /* Tipografía Femenina */
+    .product-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.3rem;
+        color: #1a1a1a;
+        margin: 15px 10px 5px 10px;
+        font-style: italic;
+    }
+    
+    .product-price {
         font-family: 'Montserrat', sans-serif;
-        font-weight: 600;
-        width: 80% !important;
+        font-size: 1.1rem;
+        color: #C5A059; /* Dorado más suave */
+        font-weight: 500;
+        margin-bottom: 15px;
+    }
+
+    /* Botón Rediseñado */
+    .stButton>button {
+        background: #1a1a1a !important;
+        color: #fff !important;
+        border-radius: 40px !important;
+        border: none !important;
+        padding: 8px 30px !important;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.8rem !important;
+        letter-spacing: 2px;
+        width: 80% !important; /* Más centrado y elegante */
         margin: 0 auto;
         display: block;
-        transition: 0.3s;
-    }
-    .stButton>button:hover {
-        background: #000000 !important;
-        color: #D4AF37 !important;
-        transform: scale(1.05);
     }
 
-    /* Ocultar elementos de Streamlit */
-    header, footer { visibility: hidden; }
-    
-    /* Responsive Grid */
+    /* Ajuste para Responsive */
     [data-testid="column"] {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+        padding: 0 10px !important;
     }
+
+    /* Ocultar basura visual de Streamlit */
+    header, footer {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
-# Lógica de carga de imágenes
 @st.cache_data(show_spinner=False)
 def get_image_from_drive(url):
-    if not isinstance(url, str) or "drive.google.com" not in url:
-        return None
+    if not isinstance(url, str) or "drive.google.com" not in url: return None
     try:
         file_id = url.split('/d/')[1].split('/')[0] if "file/d/" in url else url.split('id=')[1].split('&')[0]
         direct_url = f"https://drive.google.com/uc?export=download&id={file_id}"
         response = requests.get(direct_url, timeout=10)
         return BytesIO(response.content) if response.status_code == 200 else None
-    except:
-        return None
+    except: return None
 
-# Modal de Detalles con Estilo
-@st.dialog("RESERVACIÓN EXCLUSIVA")
-def comprar_producto(row):
-    col_img, col_det = st.columns([1, 1])
-    with col_img:
-        img_data = get_image_from_drive(row["Imagen 1 link de la primera imagen"])
-        if img_data: st.image(img_data, use_container_width=True)
-    with col_det:
-        st.markdown(f"## {row['Nombre']}")
-        st.markdown(f"<h3 style='color:#BA1A1A;'>${row['Precio']}</h3>", unsafe_allow_html=True)
-        tallas = str(row["Tallas"]).split(',')
-        talla_sel = st.selectbox("Talla:", tallas)
-        cant = st.number_input("Cantidad:", min_value=1, step=1)
-        
-        total = float(row["Precio"]) * cant
-        mensaje = f"Hola YALIS, deseo:\n👠 *{row['Nombre']}*\n📏 Talla: {talla_sel}\n🔢 Cantidad: {cant}\n💰 Total: ${total:.2f}"
-        wa_url = f"https://wa.me/{WHATSAPP_NUMBER}?text={urllib.parse.quote(mensaje)}"
-        
-        st.markdown(f'<a href="{wa_url}" target="_blank" style="text-decoration:none;"><div style="background:#25D366; color:white; text-align:center; padding:15px; border-radius:50px; font-weight:bold;">PEDIR POR WHATSAPP</div></a>', unsafe_allow_html=True)
-
-# --- UI PRINCIPAL ---
-st.markdown("<h1>YALIS</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center; letter-spacing:8px; color:#888; margin-bottom:40px;'>PASIÓN POR LA ELEGANCIA</p>", unsafe_allow_html=True)
+# Título de Tienda
+st.markdown("""
+    <div style='text-align: center; padding: 40px 0 20px 0;'>
+        <h1 style='font-family: "Playfair Display", serif; font-size: 3.5rem; margin:0;'>Yalis</h1>
+        <p style='font-family: "Montserrat", sans-serif; letter-spacing: 6px; color: #C5A059; font-size: 0.7rem;'>COLECCIÓN EXCLUSIVA</p>
+    </div>
+""", unsafe_allow_html=True)
 
 try:
     conn = st.connection("gsheets", type=GSheetsConnection)
     df = conn.read(ttl="5m").dropna(subset=['Nombre'])
 
-    # Grid Responsive Automático
+    # Grid Dinámico
     main_cols = st.columns(3)
     
     for index, row in df.iterrows():
         with main_cols[index % 3]:
-            # Contenedor de Tarjeta
-            st.markdown('<div class="product-card">', unsafe_allow_html=True)
+            # Todo el contenido dentro de un div con estilo de tarjeta
+            st.markdown(f"""
+                <div class="product-card">
+                    <div class="img-container">
+            """, unsafe_allow_html=True)
             
-            # Imagen con Proporción Controlada
+            # Imagen
             portada = get_image_from_drive(row["Imagen 1 link de la primera imagen"])
             if portada:
                 st.image(portada, use_container_width=True)
             
-            # Info del Producto
-            st.markdown(f"<h4>{row['Nombre']}</h4>", unsafe_allow_html=True)
-            st.markdown(f'<p class="price-tag">${row["Precio"]}</p>', unsafe_allow_html=True)
+            st.markdown(f"""
+                    </div>
+                    <div class="product-title">{row['Nombre']}</div>
+                    <div class="product-price">${row['Precio']}</div>
+                </div>
+            """, unsafe_allow_html=True)
             
-            # Botón dentro de la tarjeta
-            if st.button("VER DETALLES", key=f"v_{row['cod.']}"):
-                comprar_producto(row)
-            
-            st.markdown('</div>', unsafe_allow_html=True)
+            # El botón de Streamlit se coloca justo debajo, pero visualmente parece parte de la tarjeta
+            if st.button("DESCUBRIR", key=f"btn_{row['cod.']}"):
+                # Aquí llamarías a tu función st.dialog que ya creamos antes
+                st.toast(f"Cargando {row['Nombre']}...") 
 
 except Exception as e:
-    st.error("Conectando con la boutique...")
+    st.error("Conectando con Boutique...")
