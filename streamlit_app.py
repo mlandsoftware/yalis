@@ -103,42 +103,35 @@ div[data-testid="stNumberInput"] input {
     text-align: center !important;
 }
 
-div[data-testid="stButton"] > button[kind="secondary"] {
+/* Botones de navegación del slider en modal */
+div[data-testid="stDialog"] .stButton > button[key*="slider_"] {
     background: #E91E63 !important;
     color: white !important;
     border-radius: 50% !important;
-    width: 45px !important;
-    height: 45px !important;
-    font-size: 18px !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    padding: 0 !important;
+    font-weight: 800 !important;
     border: none !important;
-    min-height: 45px !important;
 }
 
-div[data-testid="stButton"] > button[kind="secondary"]:hover {
+div[data-testid="stDialog"] .stButton > button[key*="slider_"]:hover {
     background: #C2185B !important;
-    color: white !important;
 }
 
-.thumb-container {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-    margin-top: 10px;
+/* Miniaturas en modal */
+div[data-testid="stDialog"] .stButton > button[key*="thumb_"] {
+    background: transparent !important;
+    border: 2px solid #ddd !important;
+    border-radius: 8px !important;
+    padding: 2px !important;
+    width: 100% !important;
+    height: 50px !important;
 }
 
-.thumb-img {
-    width: 55px;
-    height: 55px;
-    object-fit: cover;
-    border-radius: 8px;
-    border: 2px solid transparent;
-    opacity: 0.5;
-    transition: all 0.2s;
-}
-
-.thumb-img.active {
-    border-color: #E91E63;
-    opacity: 1;
+div[data-testid="stDialog"] .stButton > button[key*="thumb_"]:hover {
+    border-color: #E91E63 !important;
 }
 
 header, footer {visibility: hidden;}
@@ -156,92 +149,87 @@ def get_image_from_drive(url):
         return BytesIO(response.content) if response.status_code == 200 else None
     except: return None
 
-def img_to_base64(img_bytesio):
-    if img_bytesio is None:
-        return None
-    img_bytesio.seek(0)
-    return base64.b64encode(img_bytesio.getvalue()).decode()
-
 # --- VENTANA EMERGENTE (MODAL) CON SLIDER NATIVO ---
 @st.dialog("Detalle del producto")
 def comprar_producto(row):
-    st.markdown(f"<h2 style='color:#E91E63; font-family:Montserrat; font-weight:800; text-align:center; margin-bottom:20px;'>{row['Nombre']}</h2>", unsafe_allow_html=True)
+    # NOMBRE EN COLOR FUCSIA
+    st.markdown(f"<h2 style='color:#E91E63; font-family:Montserrat; font-weight:800; text-align:center;'>{row['Nombre']}</h2>", unsafe_allow_html=True)
     
-    imagenes_bytes = []
+    # Recolectar imágenes disponibles
+    imagenes = []
     nombres_cols = ["Imagen 1 link de la primera imagen", "Imagen 2 link de la segunda imagen", "Imagen 3 link de la tercera imagen"]
     for col_img_name in nombres_cols:
         if col_img_name in row.index and pd.notna(row[col_img_name]):
             img_data = get_image_from_drive(row[col_img_name])
             if img_data:
-                imagenes_bytes.append(img_data)
+                imagenes.append(img_data)
     
     col_img, col_det = st.columns([1.2, 1])
     
     with col_img:
-        if len(imagenes_bytes) > 1:
+        if len(imagenes) > 1:
+            # SLIDER CON SESSION_STATE
             slider_key = f"slider_idx_{row['cod.']}"
             if slider_key not in st.session_state:
                 st.session_state[slider_key] = 0
             
             idx_actual = st.session_state[slider_key]
             
-            st.image(imagenes_bytes[idx_actual], use_container_width=True)
+            # Imagen principal
+            st.image(imagenes[idx_actual], use_container_width=True)
             
-            nav_col1, nav_col2, nav_col3 = st.columns([1, 2, 1])
+            # Contador
+            st.markdown(f"<p style='text-align:center;color:#888;font-size:0.8rem;margin:5px 0;'>📷 {idx_actual + 1} / {len(imagenes)}</p>", unsafe_allow_html=True)
             
-            with nav_col1:
-                if st.button("◀", key=f"prev_{row['cod.']}", type="secondary"):
-                    nuevo_idx = (idx_actual - 1) % len(imagenes_bytes)
-                    st.session_state[slider_key] = nuevo_idx
+            # Navegación: flechas + miniaturas
+            nav_cols = st.columns([1] + [1]*len(imagenes) + [1])
+            
+            # Flecha anterior
+            with nav_cols[0]:
+                if st.button("◀", key=f"slider_prev_{row['cod.']}"):
+                    st.session_state[slider_key] = (idx_actual - 1) % len(imagenes)
                     st.rerun()
             
-            with nav_col2:
-                st.markdown(
-                    f'<p style="text-align:center; color:#888; font-size:0.9rem; margin-top:8px;">'
-                    f'{idx_actual + 1} / {len(imagenes_bytes)}</p>',
-                    unsafe_allow_html=True
-                )
-            
-            with nav_col3:
-                if st.button("▶", key=f"next_{row['cod.']}", type="secondary"):
-                    nuevo_idx = (idx_actual + 1) % len(imagenes_bytes)
-                    st.session_state[slider_key] = nuevo_idx
-                    st.rerun()
-            
-            thumbs_html = '<div class="thumb-container">'
-            for i, img in enumerate(imagenes_bytes):
-                img_b64 = img_to_base64(img)
-                active_class = "active" if i == idx_actual else ""
-                thumbs_html += f'<img src="data:image/jpeg;base64,{img_b64}" class="thumb-img {active_class}">'
-            thumbs_html += '</div>'
-            st.markdown(thumbs_html, unsafe_allow_html=True)
-            
-            thumb_cols = st.columns(len(imagenes_bytes))
-            for i, tcol in enumerate(thumb_cols):
-                with tcol:
-                    if st.button(f"{i+1}", key=f"thumb_btn_{row['cod.']}_{i}", use_container_width=True):
+            # Miniaturas
+            for i, img in enumerate(imagenes):
+                with nav_cols[i + 1]:
+                    # Mostrar miniatura como imagen + botón invisible encima
+                    img.seek(0)
+                    img_b64 = base64.b64encode(img.getvalue()).decode()
+                    border = "3px solid #E91E63" if i == idx_actual else "2px solid #ddd"
+                    st.markdown(
+                        f'<div style="border:{border};border-radius:8px;overflow:hidden;height:50px;">'
+                        f'<img src="data:image/jpeg;base64,{img_b64}" style="width:100%;height:100%;object-fit:cover;">'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
+                    # Botón para seleccionar esta imagen
+                    btn_label = "●" if i == idx_actual else "○"
+                    if st.button(btn_label, key=f"slider_thumb_{row['cod.']}_{i}"):
                         st.session_state[slider_key] = i
                         st.rerun()
             
-        elif len(imagenes_bytes) == 1:
-            st.image(imagenes_bytes[0], use_container_width=True)
+            # Flecha siguiente
+            with nav_cols[-1]:
+                if st.button("▶", key=f"slider_next_{row['cod.']}"):
+                    st.session_state[slider_key] = (idx_actual + 1) % len(imagenes)
+                    st.rerun()
+                    
+        elif len(imagenes) == 1:
+            st.image(imagenes[0], use_container_width=True)
         else:
             st.info("Sin imagen disponible")
             
     with col_det:
-        st.markdown(f"<h3 style='color:#000000; font-family:Montserrat; font-size:1.8rem;'>${row['Precio']}</h3>", unsafe_allow_html=True)
-        st.markdown(f"<p style='color:#000000; font-size:1.1rem;'><b>Colección:</b> {row['Coleccion']}</p>", unsafe_allow_html=True)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
+        # PRECIO Y OTROS TEXTOS EN NEGRO
+        st.markdown(f"<h3 style='color:#000000; font-family:Montserrat;'>${row['Precio']}</h3>", unsafe_allow_html=True)
+        st.markdown(f"<p style='color:#000000;'><b>Colección:</b> {row['Coleccion']}</p>", unsafe_allow_html=True)
         
         tallas = str(row["Tallas"]).split(',')
         talla_sel = st.selectbox("Selecciona tu talla:", tallas)
         
-        st.markdown("<br>", unsafe_allow_html=True)
-        
+        # SELECTOR DE CANTIDAD
         cantidad = st.number_input("Cantidad:", min_value=1, max_value=5, value=1, step=1)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
         
         mensaje = f"Hola YALIS, deseo comprar: {row['Nombre']} (x{cantidad}) en talla {talla_sel}"
         wa_url = f"https://wa.me/{WHATSAPP_NUMBER}?text={urllib.parse.quote(mensaje)}"
@@ -252,14 +240,13 @@ def comprar_producto(row):
                     background-color: #25D366; 
                     color: #000000; 
                     text-align: center; 
-                    padding: 15px; 
+                    padding: 12px; 
                     border-radius: 50px; 
                     font-weight: 800; 
                     font-family: Montserrat;
-                    font-size: 1.1rem;
-                    border: 2px solid #128C7E;
-                    transition: all 0.3s;">
-                    📱 WHATSAPP
+                    margin-top: 10px;
+                    border: 1px solid #128C7E;">
+                    WHATSAPP
                 </div>
             </a>
         ''', unsafe_allow_html=True)
@@ -268,7 +255,9 @@ def comprar_producto(row):
 st.markdown('<h1 style="text-align:center; color:#E91E63; font-weight:800; margin-bottom:10px;">YALIS SHOES</h1>', unsafe_allow_html=True)
 
 # BUSCADOR DE PRODUCTOS
-busqueda = st.text_input("Buscar", placeholder="Buscar modelo...", label_visibility="collapsed")
+st.markdown('<div style="max-width:500px; margin:0 auto 30px auto;">', unsafe_allow_html=True)
+busqueda = st.text_input("", placeholder="🔍 Buscar modelo...", label_visibility="collapsed")
+st.markdown('</div>', unsafe_allow_html=True)
 
 # --- CATÁLOGO ---
 try:
@@ -301,6 +290,7 @@ try:
                     st.markdown(f'<div class="product-price-cat">${row["Precio"]}</div>', unsafe_allow_html=True)
                 with c_btn:
                     if st.button("COMPRAR", key=f"btn_{row['cod.']}"):
+                        # Resetear slider al abrir
                         slider_key = f"slider_idx_{row['cod.']}"
                         st.session_state[slider_key] = 0
                         comprar_producto(row)
