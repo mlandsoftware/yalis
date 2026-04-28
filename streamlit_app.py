@@ -4,145 +4,145 @@ import pandas as pd
 import urllib.parse
 import requests
 from io import BytesIO
-import base64
 
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="YALIS | Luxury Footwear", layout="wide")
 
 WHATSAPP_NUMBER = "593978868363"
 
-# --- DISEÑO CSS ---
+# --- CSS MEJORADO (CONTENEDOR REAL) ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
 
 .stApp { background-color: #FFFFFF; font-family: 'Montserrat', sans-serif; }
 
-/* LA TARJETA CONTENEDORA */
-.product-card {
-    background: #FFFFFF;
-    border: 1px solid #E91E63;
-    border-radius: 20px;
-    padding: 20px;
-    margin-bottom: 25px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    display: flex;
-    flex-direction: column;
+/* Forzamos que el contenedor de Streamlit se comporte como la tarjeta */
+[data-testid="stVerticalBlockBorderWrapper"] {
+    border: 1px solid #E91E63 !important;
+    border-radius: 20px !important;
+    padding: 15px !important;
+    background-color: white !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
+    transition: transform 0.3s ease !important;
+}
+
+[data-testid="stVerticalBlockBorderWrapper"]:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 8px 20px rgba(233, 30, 99, 0.15) !important;
 }
 
 /* 1. NOMBRE */
 .product-title {
     color: #E91E63;
     font-weight: 800;
-    font-size: 1.1rem;
+    font-size: 1rem;
     text-transform: uppercase;
-    margin-bottom: 15px;
-    min-height: 45px;
+    margin-bottom: 10px;
+    min-height: 40px;
+    display: block;
 }
 
-/* 2. FOTO */
-.img-container {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    border-radius: 15px;
-    overflow: hidden;
-    margin-bottom: 15px;
-}
-.img-container img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+/* 2. IMAGEN (Proporción 1:1) */
+[data-testid="stImage"] img {
+    border-radius: 12px !important;
+    aspect-ratio: 1 / 1 !important;
+    object-fit: cover !important;
 }
 
-/* 3. PRECIO Y BOTÓN */
+/* 3. CONTENEDOR INFERIOR */
 .bottom-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-top: 10px;
 }
+
 .product-price {
     font-weight: 600;
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     color: #333;
 }
 
-/* Estilo para el link que parece botón */
-.view-btn {
-    background: transparent;
-    color: #E91E63;
-    border: 1px solid #E91E63;
-    border-radius: 30px;
-    padding: 6px 15px;
-    text-decoration: none;
-    font-size: 0.8rem;
-    font-weight: 600;
-    transition: 0.3s;
+/* BOTÓN OVALADO */
+.stButton > button {
+    background: transparent !important;
+    color: #E91E63 !important;
+    border: 1px solid #E91E63 !important;
+    border-radius: 30px !important;
+    padding: 5px 15px !important;
+    font-weight: 600 !important;
+    width: auto !important;
 }
-.view-btn:hover {
-    background: #E91E63;
-    color: white;
+
+.stButton > button:hover {
+    background: #E91E63 !important;
+    color: white !important;
 }
 
 header, footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-# --- FUNCIÓN PARA IMÁGENES (Convertir a Base64 para HTML) ---
-def get_image_base64(url):
-    if not isinstance(url, str) or "drive.google.com" not in url:
-        return ""
+# --- LÓGICA DE IMÁGENES ---
+@st.cache_data(show_spinner=False)
+def get_image_from_drive(url):
+    if not isinstance(url, str) or "drive.google.com" not in url: return None
     try:
         file_id = url.split('/d/')[1].split('/')[0] if "file/d/" in url else url.split('id=')[1].split('&')[0]
         direct_url = f"https://drive.google.com/uc?export=download&id={file_id}"
         response = requests.get(direct_url, timeout=10)
-        if response.status_code == 200:
-            return base64.b64encode(response.content).decode()
-    except:
-        return ""
-    return ""
+        return BytesIO(response.content) if response.status_code == 200 else None
+    except: return None
 
-# --- DIÁLOGO DE DETALLES ---
-@st.dialog("DETALLES DEL CALZADO")
-def ver_detalles(row):
-    st.write(f"### {row['Nombre']}")
-    # Aquí puedes añadir el contenido del modal como lo tenías antes
-    st.write(f"Precio: ${row['Precio']}")
-    st.write(f"Tallas: {row['Tallas']}")
-    # ... resto de tu lógica de WhatsApp ...
+@st.dialog("DETALLES DEL PRODUCTO")
+def comprar_producto(row):
+    st.markdown(f"<h2 style='color:#E91E63;'>{row['Nombre']}</h2>", unsafe_allow_html=True)
+    col_img, col_det = st.columns([1.2, 1])
+    with col_img:
+        img_cols = ["Imagen 1 link de la primera imagen", "Imagen 2 link de la segunda imagen", "Imagen 3 link de la tercera imagen"]
+        t1, t2, t3 = st.tabs(["Vista 1", "Vista 2", "Vista 3"])
+        for i, t in enumerate([t1, t2, t3]):
+            with t:
+                data = get_image_from_drive(row[img_cols[i]])
+                if data: st.image(data, use_container_width=True)
+    with col_det:
+        st.markdown(f"### ${row['Precio']}")
+        tallas = str(row["Tallas"]).split(',')
+        talla_sel = st.selectbox("Talla:", tallas)
+        cantidad = st.number_input("Cantidad:", min_value=1, step=1)
+        total = float(row["Precio"]) * cantidad
+        wa_url = f"https://wa.me/{WHATSAPP_NUMBER}?text=Hola YALIS, pedido: {row['Nombre']} Talla: {talla_sel}"
+        st.markdown(f'<a href="{wa_url}" target="_blank" style="text-decoration:none;"><div style="background:#25D366; color:white; text-align:center; padding:12px; border-radius:50px; font-weight:bold;">RESERVAR WHATSAPP</div></a>', unsafe_allow_html=True)
+
+# --- CABECERA ---
+st.markdown('<h1 style="text-align:center; color:#E91E63;">YALIS LUXURY</h1>', unsafe_allow_html=True)
 
 # --- CATÁLOGO ---
 try:
     conn = st.connection("gsheets", type=GSheetsConnection)
     df = conn.read(ttl="5m").dropna(subset=['Nombre'])
 
-    cols = st.columns(3)
+    main_cols = st.columns(3)
     for index, row in df.iterrows():
-        with cols[index % 3]:
-            # Obtenemos la imagen en base64 para que el HTML no dependa de componentes externos
-            img_b64 = get_image_base64(row["Imagen 1 link de la primera imagen"])
-            img_html = f"data:image/png;base64,{img_b64}" if img_b64 else "https://via.placeholder.com/400"
-            
-            # ESTRUCTURA ÚNICA DENTRO DE LA TARJETA
-            st.markdown(f"""
-                <div class="product-card">
-                    <div class="product-title">{row['Nombre']}</div>
-                    <div class="img-container">
-                        <img src="{img_html}">
-                    </div>
-                    <div class="bottom-row">
-                        <div class="product-price">${row['Precio']}</div>
-                        <a href="?prod={row['cod.']}" class="view-btn">VER DETALLES</a>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
-            
-            # Nota: Como Streamlit no permite botones nativos dentro de HTML inyectado fácilmente,
-            # lo ideal es usar el query_params o botones invisibles de Streamlit debajo, 
-            # pero para que el diseño no se rompa, esta estructura HTML es la que garantiza el diseño de la imagen.
-
-            if st.button("Abrir Detalles", key=f"btn_{row['cod.']}", use_container_width=True):
-                ver_detalles(row)
+        with main_cols[index % 3]:
+            # Usamos st.container con border=True para que Streamlit cree la tarjeta real
+            with st.container(border=True):
+                # 1. NOMBRE
+                st.markdown(f'<span class="product-title">{row["Nombre"]}</span>', unsafe_allow_html=True)
+                
+                # 2. FOTO
+                portada = get_image_from_drive(row["Imagen 1 link de la primera imagen"])
+                if portada:
+                    st.image(portada, use_container_width=True)
+                
+                # 3. PRECIO Y BOTÓN (Alineados en la misma fila)
+                col_p, col_b = st.columns([1, 1])
+                with col_p:
+                    st.markdown(f'<div class="product-price">${row["Precio"]}</div>', unsafe_allow_html=True)
+                with col_b:
+                    if st.button("DETALLES", key=f"btn_{row['cod.']}"):
+                        comprar_producto(row)
 
 except Exception as e:
-    st.error("Conectando con inventario...")
+    st.error("Error al cargar el inventario.")
