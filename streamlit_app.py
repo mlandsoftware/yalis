@@ -317,8 +317,8 @@ st.markdown("""
 <div style="text-align:center; margin-top:60px; padding:40px 20px; border-top:2px solid #E91E63;">
     <h3 style="color:#E91E63; font-family:Montserrat; font-weight:800; margin-bottom:20px;">YALIS SHOES</h3>
     <p style="color:#333; font-family:Montserrat; font-size:1rem; line-height:1.8;">
-        📍 Quito, Ecuador &nbsp;|&nbsp; 📱 +593 97 886 8363<br>
-        🚚 Envíos a todo el país &nbsp;|&nbsp; 💳 Pagos contra entrega
+        📍 Guayaquil, Ecuador &nbsp;|&nbsp; 📱 +593 97 886 8363<br>
+        🚚 Envíos a todo el país &nbsp;
     </p>
     <p style="color:#888; font-family:Montserrat; font-size:0.85rem; margin-top:20px;">
         © 2026 YALIS SHOES - Calzado para dama
