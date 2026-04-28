@@ -4,7 +4,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from urllib.parse import quote
 
-# ---------------------------
+# --------------------------
 # CONFIG
 # ---------------------------
 SHEET_URL = "https://docs.google.com/spreadsheets/d/1HaH2d9O7zQUSDtKE7GoA2EZcQetINyOr48YpA_QRcpw"
