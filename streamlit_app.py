@@ -11,110 +11,110 @@ st.set_page_config(page_title="YALIS | Luxury Footwear", layout="wide")
 # WhatsApp Config (Ecuador)
 WHATSAPP_NUMBER = "593978868363"
 
+# --- DISEÑO CSS INSPIRADO EN LA IMAGEN ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
 
-/* FONDO CON FORMAS ORGÁNICAS (Inspirado en las ondas púrpuras de la imagen) */
+/* Fondo general */
 .stApp {
     background-color: #FFFFFF;
-    background-image: radial-gradient(circle at 100% 0%, #bd93d8 0%, #ffffff 40%),
-                      radial-gradient(circle at 0% 100%, #bd93d8 0%, #ffffff 40%);
-    background-attachment: fixed;
-}
-
-html, body, [data-testid="stAppViewContainer"] {
-    color: #4A4A4A !important;
     font-family: 'Montserrat', sans-serif;
 }
 
-/* ========== TARJETA DE PRODUCTO (Limpia y moderna) ========== */
+/* ========== TARJETA DE PRODUCTO ========== */
 .product-card {
     background: #FFFFFF;
-    border-radius: 40px; /* Bordes muy redondeados como en los elementos de la imagen */
-    padding: 15px 15px 30px 15px;
-    border: 2px solid #F0F0F0;
-    margin-bottom: 30px;
-    text-align: center;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 10px 20px rgba(189, 147, 216, 0.1);
+    border: 1px solid #E91E63; /* Borde fucsia delgado como la imagen */
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 25px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease;
 }
 
 .product-card:hover {
-    transform: scale(1.03);
-    border-color: #ff007f; /* Color Fucsia de la imagen */
-    box-shadow: 0 15px 30px rgba(255, 0, 127, 0.15);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(233, 30, 99, 0.15);
 }
 
-/* Imagen con bordes redondeados suaves */
-.product-card img {
-    border-radius: 30px;
-    margin-bottom: 15px;
-    transition: 0.3s;
-}
-
-/* ========== TEXTOS ESTILO "ONLINE SHOPPING" ========== */
+/* 1. NOMBRE (Estilo Mary Luna) */
 .product-title {
+    color: #E91E63;
     font-weight: 800;
-    font-size: 1.2rem;
-    color: #ff007f; /* Fucsia vibrante */
+    font-size: 1rem;
     text-transform: uppercase;
-    margin-top: 10px;
-    letter-spacing: -0.5px;
+    margin-bottom: 15px;
+    text-align: left;
+    min-height: 45px;
+    line-height: 1.2;
+}
+
+/* 2. CONTENEDOR DE FOTO (Mantiene proporción) */
+.product-image-container {
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 15px;
+}
+
+/* Forzar proporción cuadrada para evitar que se estire */
+.product-image-container img {
+    width: 100%;
+    aspect-ratio: 1 / 1; 
+    object-fit: cover;
+    display: block;
+}
+
+/* 3. CONTENEDOR PRECIO Y BOTÓN (Alineados abajo) */
+.price-button-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto; /* Empuja al final */
+    padding-top: 10px;
 }
 
 .product-price {
     font-weight: 600;
-    font-size: 1.4rem;
-    color: #5c2d91; /* Púrpura oscuro */
-    margin: 5px 0 20px 0;
+    font-size: 1.2rem;
+    color: #333;
 }
 
-/* ========== BOTONES "GET STARTED" (Estilo Píldora) ========== */
+/* BOTÓN OVALADO FUCSIA */
 .stButton > button {
     background: transparent !important;
-    color: #ff007f !important;
-    border: 2px solid #ff007f !important;
-    border-radius: 50px !important;
-    padding: 10px 30px !important;
-    font-weight: 700 !important;
+    color: #E91E63 !important;
+    border: 1px solid #E91E63 !important;
+    border-radius: 30px !important;
+    padding: 6px 18px !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
     text-transform: uppercase;
-    letter-spacing: 1px;
     transition: all 0.3s ease !important;
-    width: 90% !important;
+    width: auto !important;
 }
 
 .stButton > button:hover {
-    background: #ff007f !important;
+    background: #E91E63 !important;
     color: white !important;
-    box-shadow: 0 5px 15px rgba(255, 0, 127, 0.4);
 }
 
-/* ========== CABECERA DINÁMICA ========== */
-.main-header {
-    text-align: left;
-    padding: 20px;
-}
-
-.brand-name {
-    color: #ff007f;
-    font-weight: 800;
-    font-size: 1.5rem;
-}
-
-/* Ocultar elementos de Streamlit */
+/* OCULTAR ELEMENTOS STREAMLIT */
 header {visibility: hidden;}
 footer {visibility: hidden;}
 
-/* Adaptabilidad para móviles */
+/* Responsive */
 @media (max-width: 768px) {
-    .product-card { border-radius: 30px; }
-    .product-title { font-size: 1rem; }
+    [data-testid="column"] { width: 100% !important; flex: 1 1 100% !important; }
 }
 </style>
 """, unsafe_allow_html=True)
 
-# --- LÓGICA DE IMÁGENES GOOGLE DRIVE ---
+# --- LÓGICA DE IMÁGENES ---
 @st.cache_data(show_spinner=False)
 def get_image_from_drive(url):
     if not isinstance(url, str) or "drive.google.com" not in url:
@@ -127,10 +127,10 @@ def get_image_from_drive(url):
     except:
         return None
 
-# --- VENTANA DE DETALLES (MODAL) ---
-@st.dialog("DETALLES DEL CALZADO")
+# --- MODAL DE DETALLES ---
+@st.dialog("DETALLES DEL PRODUCTO")
 def comprar_producto(row):
-    st.markdown(f"<h2 style='text-align:left; font-family:Cinzel;'>{row['Nombre']}</h2>", unsafe_allow_html=True)
+    st.markdown(f"<h2 style='color:#E91E63;'>{row['Nombre']}</h2>", unsafe_allow_html=True)
     col_img, col_det = st.columns([1.2, 1])
     
     with col_img:
@@ -143,34 +143,20 @@ def comprar_producto(row):
                 else: st.caption("Imagen no disponible")
 
     with col_det:
-        st.markdown(f"<h3 style='text-align:left; color:#D4AF37;'>${row['Precio']}</h3>", unsafe_allow_html=True)
+        st.markdown(f"### ${row['Precio']}")
         st.write(f"**Colección:** {row['Coleccion']}")
-        if pd.notna(row['Promocion']):
-            st.success(f"Oferta: {row['Promocion']}")
-        
         tallas = str(row["Tallas"]).split(',')
-        talla_sel = st.selectbox("Selecciona tu talla:", tallas)
-        cantidad = st.number_input("Cantidad de pares:", min_value=1, step=1)
+        talla_sel = st.selectbox("Talla:", tallas)
+        cantidad = st.number_input("Cantidad:", min_value=1, step=1)
         
         total = float(row["Precio"]) * cantidad
-        mensaje = f"Hola YALIS, deseo un pedido:\n👠 *{row['Nombre']}*\n📏 Talla: {talla_sel}\n🔢 Cantidad: {cantidad}\n💰 Total: ${total:.2f}"
+        mensaje = f"Hola YALIS, pedido:\n👠 *{row['Nombre']}*\n📏 Talla: {talla_sel}\n🔢 Cantidad: {cantidad}\n💰 Total: ${total:.2f}"
         wa_url = f"https://wa.me/{WHATSAPP_NUMBER}?text={urllib.parse.quote(mensaje)}"
         
-        st.markdown(f"""
-            <a href="{wa_url}" target="_blank" style="text-decoration:none;">
-                <div style="background:#25D366; color:white; text-align:center; padding:15px; border-radius:50px; font-weight:bold; margin-top:20px;">
-                    RESERVAR POR WHATSAPP
-                </div>
-            </a>
-            """, unsafe_allow_html=True)
+        st.markdown(f'<a href="{wa_url}" target="_blank" style="text-decoration:none;"><div style="background:#25D366; color:white; text-align:center; padding:12px; border-radius:50px; font-weight:bold; margin-top:10px;">RESERVAR WHATSAPP</div></a>', unsafe_allow_html=True)
 
 # --- CABECERA ---
-st.markdown("""
-    <div style="text-align:center; padding: 40px 0 20px 0;">
-        <h1 style="font-family:'Cinzel'; font-size: 3.5em; margin-bottom:0;">YALIS</h1>
-        <p style="letter-spacing: 8px; color: #D4AF37; font-weight:300; font-size:0.9em;">LUXURY FOOTWEAR</p>
-    </div>
-    """, unsafe_allow_html=True)
+st.markdown('<div style="text-align:center; padding: 20px;"><h1 style="color:#E91E63; font-weight:800;">YALIS LUXURY</h1></div>', unsafe_allow_html=True)
 
 # --- CATÁLOGO ---
 try:
@@ -180,27 +166,30 @@ try:
     main_cols = st.columns(3)
     for index, row in df.iterrows():
         with main_cols[index % 3]:
-            # Inicio de la tarjeta
+            # Apertura de Tarjeta
             st.markdown('<div class="product-card">', unsafe_allow_html=True)
             
-            # Imagen de Portada
+            # 1. NOMBRE
+            st.markdown(f'<div class="product-title">{row["Nombre"]}</div>', unsafe_allow_html=True)
+            
+            # 2. FOTO
             portada = get_image_from_drive(row["Imagen 1 link de la primera imagen"])
+            st.markdown('<div class="product-image-container">', unsafe_allow_html=True)
             if portada:
                 st.image(portada, use_container_width=True)
+            else:
+                st.write("Imagen no disponible")
+            st.markdown('</div>', unsafe_allow_html=True)
             
-            # Info y Botón
-            st.markdown(f"""
-                <div class="product-info">
-                    <div class="product-title">{row['Nombre']}</div>
-                    <div class="product-price">${row['Precio']}</div>
-                </div>
-            """, unsafe_allow_html=True)
+            # 3. PRECIO Y BOTÓN
+            st.markdown('<div class="price-button-container">', unsafe_allow_html=True)
+            st.markdown(f'<div class="product-price">${row["Precio"]}</div>', unsafe_allow_html=True)
             
             if st.button("VER DETALLES", key=f"btn_{row['cod.']}"):
                 comprar_producto(row)
             
-            # Cierre de la tarjeta
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True) # Cierre precio-boton
+            st.markdown('</div>', unsafe_allow_html=True) # Cierre tarjeta
 
 except Exception as e:
-    st.error("Conectando con el inventario...")
+    st.error("Cargando catálogo...")
