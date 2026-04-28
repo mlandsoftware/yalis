@@ -6,7 +6,7 @@ import requests
 from io import BytesIO
 
 # --- CONFIGURACIÓN DE PÁGINA ---
-st.set_page_config(page_title="YALIS | Luxury Footwear", layout="wide")
+st.set_page_config(page_title="YALIS SHOES| Calzado para dama", layout="wide")
 
 WHATSAPP_NUMBER = "593978868363"
 
@@ -133,7 +133,7 @@ def comprar_producto(row):
                     font-family: Montserrat;
                     margin-top: 20px;
                     border: 1px solid #128C7E;">
-                    PEDIR POR WHATSAPP
+                    WHATSAPP
                 </div>
             </a>
         ''', unsafe_allow_html=True)
