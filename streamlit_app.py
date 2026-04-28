@@ -23,18 +23,14 @@ st.set_page_config(
 # ---------------------------
 
 def convertir_url_drive(url):
-    """
-    Convierte URLs de Google Drive a formato directo para mostrar imágenes.
-    """
+    """Convierte URLs de Google Drive a formato directo."""
     if pd.isna(url) or url == "" or str(url).strip() == "":
         return None
     
     url_str = str(url).strip()
-    
-    # Extraer FILE_ID de diferentes formatos de URL de Drive
     patterns = [
-        r'/file/d/([a-zA-Z0-9_-]+)',  # formato: /file/d/ID/view
-        r'[?&]id=([a-zA-Z0-9_-]+)',    # formato: open?id=ID
+        r'/file/d/([a-zA-Z0-9_-]+)',
+        r'[?&]id=([a-zA-Z0-9_-]+)',
     ]
     
     for pattern in patterns:
@@ -46,36 +42,31 @@ def convertir_url_drive(url):
     return url_str
 
 def formatear_precio(precio):
-    """Convierte el precio a número float."""
     try:
         return float(precio)
     except (ValueError, TypeError):
         return 0.0
 
 def obtener_tallas(tallas_str):
-    """Convierte string de tallas en lista."""
     if pd.isna(tallas_str) or str(tallas_str).strip() == "":
         return []
     return [t.strip() for t in str(tallas_str).split(',') if t.strip()]
 
 # ---------------------------
-# CONEXIÓN A GOOGLE SHEETS (con cache)
+# CONEXIÓN A GOOGLE SHEETS
 # ---------------------------
 @st.cache_data(ttl=300)
 def cargar_datos():
-    """Carga los datos de la pestaña 'web' del Google Sheet."""
     try:
         scope = [
             "https://www.googleapis.com/auth/spreadsheets",
             "https://www.googleapis.com/auth/drive"
         ]
         
-        # Obtener credenciales de Streamlit Secrets
         creds_dict = st.secrets["gcp_service_account"]
         creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
         client = gspread.authorize(creds)
         
-        # Abrir la hoja por URL y seleccionar pestaña "web"
         spreadsheet = client.open_by_url(SHEET_URL)
         sheet = spreadsheet.worksheet("web")
         data = sheet.get_all_records()
@@ -85,22 +76,63 @@ def cargar_datos():
         
         df = pd.DataFrame(data)
         
-        # Limpiar y preparar datos
-        df['Precio'] = df['Precio'].apply(formatear_precio)
-        df['Imagen 1'] = df['Imagen 1 link de la primera imagen'].apply(convertir_url_drive)
-        df['Imagen 2'] = df['Imagen 2 link de la segunda imagen'].apply(convertir_url_drive)
-        df['Imagen 3'] = df['Imagen 3 link de la tercera imagen'].apply(convertir_url_drive)
-        df['Tallas_Lista'] = df['Tallas'].apply(obtener_tallas)
+        # DEBUG: Mostrar nombres reales de columnas (solo para desarrollo)
+        # st.write("Columnas detectadas:", list(df.columns))
         
-        return df
+        # Normalizar nombres de columnas (quitar espacios extra, minúsculas)
+        df.columns = df.columns.str.strip()
+        
+        # Mapear columnas por nombre parcial (más robusto)
+        column_mapping = {}
+        for col in df.columns:
+            col_lower = col.lower()
+            if 'cod' in col_lower:
+                column_mapping['cod'] = col
+            elif 'coleccion' in col_lower:
+                column_mapping['coleccion'] = col
+            elif 'nombre' in col_lower:
+                column_mapping['nombre'] = col
+            elif 'precio' in col_lower:
+                column_mapping['precio'] = col
+            elif 'tallas' in col_lower:
+                column_mapping['tallas'] = col
+            elif 'promocion' in col_lower:
+                column_mapping['promocion'] = col
+            elif 'imagen 1' in col_lower or 'primera' in col_lower:
+                column_mapping['imagen1'] = col
+            elif 'imagen 2' in col_lower or 'segunda' in col_lower:
+                column_mapping['imagen2'] = col
+            elif 'imagen 3' in col_lower or 'tercera' in col_lower:
+                column_mapping['imagen3'] = col
+        
+        # Verificar que tenemos las columnas mínimas necesarias
+        required = ['cod', 'nombre', 'precio']
+        missing = [r for r in required if r not in column_mapping]
+        if missing:
+            st.error(f"❌ Columnas faltantes en la hoja: {missing}")
+            st.write("Columnas detectadas:", list(df.columns))
+            return pd.DataFrame()
+        
+        # Crear DataFrame limpio con nombres estandarizados
+        df_clean = pd.DataFrame()
+        df_clean['Cod'] = df[column_mapping['cod']]
+        df_clean['Coleccion'] = df[column_mapping.get('coleccion', df.columns[1])] if 'coleccion' in column_mapping else 'General'
+        df_clean['Nombre'] = df[column_mapping['nombre']]
+        df_clean['Precio'] = df[column_mapping['precio']].apply(formatear_precio)
+        df_clean['Tallas'] = df[column_mapping.get('tallas', df.columns[4])].apply(obtener_tallas) if 'tallas' in column_mapping else [[] for _ in range(len(df))]
+        df_clean['Promocion'] = df[column_mapping.get('promocion', df.columns[5])] if 'promocion' in column_mapping else ''
+        df_clean['Imagen1'] = df[column_mapping['imagen1']].apply(convertir_url_drive) if 'imagen1' in column_mapping else None
+        df_clean['Imagen2'] = df[column_mapping['imagen2']].apply(convertir_url_drive) if 'imagen2' in column_mapping else None
+        df_clean['Imagen3'] = df[column_mapping['imagen3']].apply(convertir_url_drive) if 'imagen3' in column_mapping else None
+        
+        return df_clean
         
     except Exception as e:
-        st.error(f"❌ Error al conectar con Google Sheets: {str(e)}")
-        st.info("💡 Verifica que: 1) La hoja esté compartida con la cuenta de servicio, 2) Exista la pestaña 'web', 3) Las credenciales en Secrets sean correctas.")
+        st.error(f"❌ Error: {str(e)}")
         return pd.DataFrame()
 
 # ---------------------------
-# INICIALIZAR ESTADO DE SESIÓN
+# ESTADO DE SESIÓN
 # ---------------------------
 if "cart" not in st.session_state:
     st.session_state.cart = []
@@ -111,76 +143,65 @@ if "cart" not in st.session_state:
 df = cargar_datos()
 
 # ---------------------------
-# HEADER
+# UI PRINCIPAL
 # ---------------------------
 st.title("👠 Yalis - Tienda de Calzado para Dama")
 st.markdown("*Elegancia y estilo en cada paso*")
 st.markdown("---")
 
 if df.empty:
-    st.warning("⚠️ No se pudieron cargar los productos. Por favor, verifica la conexión con Google Sheets.")
+    st.warning("⚠️ No se pudieron cargar los productos.")
     st.stop()
 
-# ---------------------------
-# FILTROS (opcional)
-# ---------------------------
-colecciones = ["Todas"] + sorted(df['Coleccion'].dropna().unique().tolist())
+# Filtros
+colecciones = ["Todas"] + sorted([c for c in df['Coleccion'].unique() if pd.notna(c) and str(c).strip()])
 col1, col2 = st.columns([1, 3])
 with col1:
     filtro_coleccion = st.selectbox("📂 Filtrar por colección:", colecciones)
 
-if filtro_coleccion != "Todas":
-    df_filtrado = df[df['Coleccion'] == filtro_coleccion].reset_index(drop=True)
-else:
-    df_filtrado = df.copy()
-
+df_filtrado = df[df['Coleccion'] == filtro_coleccion].reset_index(drop=True) if filtro_coleccion != "Todas" else df.copy()
 st.markdown(f"**Mostrando {len(df_filtrado)} productos**")
 st.markdown("---")
 
-# ---------------------------
-# MOSTRAR PRODUCTOS EN GRID
-# ---------------------------
+# Grid de productos
 cols = st.columns(3)
 
 for i, row in df_filtrado.iterrows():
     with cols[i % 3]:
         with st.container():
-            # Código y colección
             st.caption(f"🏷️ {row['Cod']} | 📂 {row['Coleccion']}")
             st.subheader(row['Nombre'])
             
-            # Galería de imágenes
+            # Imágenes
             imagenes = []
-            if pd.notna(row['Imagen 1']) and row['Imagen 1']:
-                imagenes.append(row['Imagen 1'])
-            if pd.notna(row['Imagen 2']) and row['Imagen 2']:
-                imagenes.append(row['Imagen 2'])
-            if pd.notna(row['Imagen 3']) and row['Imagen 3']:
-                imagenes.append(row['Imagen 3'])
+            if pd.notna(row['Imagen1']) and row['Imagen1']:
+                imagenes.append(row['Imagen1'])
+            if pd.notna(row['Imagen2']) and row['Imagen2']:
+                imagenes.append(row['Imagen2'])
+            if pd.notna(row['Imagen3']) and row['Imagen3']:
+                imagenes.append(row['Imagen3'])
             
             if imagenes:
-                # Mostrar primera imagen
                 st.image(imagenes[0], use_container_width=True)
-                
-                # Miniaturas si hay más imágenes
                 if len(imagenes) > 1:
                     mini_cols = st.columns(len(imagenes))
-                    for idx, img_url in enumerate(imagenes):
+                    for idx, img in enumerate(imagenes):
                         with mini_cols[idx]:
-                            st.image(img_url, use_container_width=True)
+                            st.image(img, use_container_width=True)
             else:
-                st.info("🖼️ Imagen no disponible")
+                st.info("🖼️ Sin imagen")
             
-            # Precio y promoción
+            # Precio
             col_p1, col_p2 = st.columns(2)
             with col_p1:
                 st.markdown(f"### 💰 ${row['Precio']:.2f}")
             with col_p2:
-                if pd.notna(row['Promocion']) and str(row['Promocion']).strip():
-                    st.markdown(f"🏷️ **{row['Promocion']}**")
+                promo = str(row['Promocion']).strip()
+                if promo and promo.lower() not in ['nan', 'none', '']:
+                    st.markdown(f"🏷️ **{promo}**")
             
-            # Selector de talla
-            tallas = row['Tallas_Lista']
+            # Tallas
+            tallas = row['Tallas'] if isinstance(row['Tallas'], list) else []
             talla_key = f"talla_{row['Cod']}_{i}"
             
             if tallas:
@@ -189,63 +210,6 @@ for i, row in df_filtrado.iterrows():
                 talla_sel = "Única"
                 st.write("📏 Talla única")
             
-            # Botón agregar al carrito
+            # Botón agregar
             btn_key = f"btn_{row['Cod']}_{i}"
-            if st.button(f"🛒 Agregar", key=btn_key, use_container_width=True, type="primary"):
-                producto = {
-                    'codigo': row['Cod'],
-                    'nombre': row['Nombre'],
-                    'precio': row['Precio'],
-                    'talla': talla_sel,
-                    'coleccion': row['Coleccion']
-                }
-                st.session_state.cart.append(producto)
-                st.success(f"✅ ¡Agregado!")
-                st.rerun()
-            
-            st.markdown("---")
-
-# ---------------------------
-# SIDEBAR - CARRITO
-# ---------------------------
-st.sidebar.title("🛒 Tu Carrito")
-
-if not st.session_state.cart:
-    st.sidebar.info("El carrito está vacío. ¡Agrega algunos productos! 👠")
-else:
-    total = 0
-    mensaje = "Hola Yalis! 👋%0AQuiero hacer este pedido:%0A%0A"
-    
-    for idx, item in enumerate(st.session_state.cart):
-        st.sidebar.markdown(f"**{item['nombre']}**")
-        st.sidebar.caption(f"Talla: {item['talla']} | ${item['precio']:.2f}")
-        
-        # Botón eliminar
-        if st.sidebar.button("🗑️ Quitar", key=f"del_{idx}"):
-            st.session_state.cart.pop(idx)
-            st.rerun()
-        
-        st.sidebar.markdown("---")
-        
-        total += item['precio']
-        mensaje += f"• {item['nombre']} (Talla {item['talla']}) - ${item['precio']:.2f}%0A"
-    
-    # Total
-    st.sidebar.markdown(f"### 💰 Total: ${total:.2f}")
-    mensaje += f"%0A💰 *Total: ${total:.2f}*%0A%0AGracias! 😊"
-    
-    # Botón WhatsApp
-    st.sidebar.markdown("---")
-    if st.sidebar.button("📱 Finalizar compra por WhatsApp", use_container_width=True, type="primary"):
-        url = f"https://wa.me/{WHATSAPP_NUMBER}?text={quote(mensaje)}"
-        st.sidebar.markdown(f"[👉 Hacer clic aquí para enviar por WhatsApp]({url})", unsafe_allow_html=True)
-        
-        # Mostrar mensaje para copiar
-        with st.sidebar.expander("📋 Copiar mensaje manualmente"):
-            st.code(mensaje.replace('%0A', '\n').replace('*', ''))
-
-# ---------------------------
-# FOOTER
-# ---------------------------
-st.markdown("---")
-st.caption("© 2026 Yalis - Tienda de Calzado para Dama | Hecho con ❤️ en Ecuador")
+            if st.button(f"🛒 Agregar", key=btn_key
